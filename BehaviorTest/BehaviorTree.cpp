@@ -7,7 +7,6 @@ BehaviorTree::BehaviorTree()
 	m_RootNode = NULL;
 	m_RootSequence = NULL;
 	m_RootSelector = NULL;
-	m_RootDecorator = NULL;
 	m_CurAction = NULL;
 	m_isOnePath = false;
 	m_Type = BAT_NONE;
@@ -27,12 +26,6 @@ BehaviorTree::~BehaviorTree()
 	for (; StartIter1 != EndIter1; StartIter1++)
 		delete StartIter1->second;
 
-	unordered_map<string, Decorator*>::iterator StartIter2 = m_DecoratorMap.begin();
-	unordered_map<string, Decorator*>::iterator EndIter2 = m_DecoratorMap.end();
-
-	for (; StartIter2 != EndIter2; StartIter2++)
-		delete StartIter2->second;
-
 	for (size_t i = 0; i < m_vecAction.size(); i++)
 		delete m_vecAction[i];
 }
@@ -42,25 +35,8 @@ void BehaviorTree::Update(float DeltaTime)
 	switch (m_Type)
 	{
 	case BAT_RUNNING:
-		switch (m_CurAction->GetKeepActionType())
-		{
-		case BT_NONE:
-		case BT_ROOT:
-		case BT_SELECTOR:
-		case BT_SEQUENCE:
 			m_CurAction->Update(DeltaTime);
 			break;
-
-		case BT_DECORATOR:
-		{
-			Decorator* getParent = (Decorator*)m_CurAction->GetKeepAction();
-				
-			if(getParent->m_CheckFunc(DeltaTime) == BAT_SUCCED)
-				m_CurAction->Update(DeltaTime);
-		}
-			break;
-
-		}
 		break;
 	case BAT_NONE:
 	case BAT_SUCCED:
@@ -128,40 +104,6 @@ void BehaviorTree::AddRootSequenceInSelector(const string & NewSelectorKeyName)
 
 	m_RootSequence->AddChild(newSelector);
 	m_SelectorMap.insert(make_pair(NewSelectorKeyName, newSelector));
-}
-
-void BehaviorTree::AddRootSequenceInDecorator(const string & NewDecoratorKeyName)
-{
-	if (m_RootSequence == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_RootNode == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	Decorator* newDecorator = FindDecorator(NewDecoratorKeyName);
-
-	if (newDecorator != NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	newDecorator = new Decorator();
-	newDecorator->SetTag(NewDecoratorKeyName);
-	newDecorator->SetTreeName(m_TagName);
-	newDecorator->SetActionType(BT_DECORATOR);
-	newDecorator->SetKeepActionType(BT_SEQUENCE);
-	newDecorator->SetKeepAction(m_RootSequence);
-
-	m_RootSequence->AddChild(newDecorator);
-
-	m_DecoratorMap.insert(make_pair(NewDecoratorKeyName, newDecorator));
 }
 
 void BehaviorTree::AddRootSequenceInAction(const string& SequenceKeyName, Action* NewAction)
@@ -238,31 +180,6 @@ void BehaviorTree::AddRootSelectorInSelector(const string & NewSelectorKeyName)
 	m_SelectorMap.insert(make_pair(NewSelectorKeyName, newSelector));
 }
 
-void BehaviorTree::AddRootSelectorInDecorator(const string & NewDecoratorKeyName)
-{
-	if (m_RootNode == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_RootSelector == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	Decorator* newDecorator = new Decorator();
-	newDecorator->SetTag(NewDecoratorKeyName);
-	newDecorator->SetTreeName(m_TagName);
-	newDecorator->SetActionType(BT_DECORATOR);
-	newDecorator->SetKeepActionType(BT_SELECTOR);
-	newDecorator->SetKeepAction(m_RootSelector);
-
-	m_RootSelector->AddChild(newDecorator);
-	m_DecoratorMap.insert(make_pair(NewDecoratorKeyName, newDecorator));
-}
-
 void BehaviorTree::AddRootSelectorInAction(const string & SelectorKeyName, Action * NewAction)
 {
 	if (m_RootNode == NULL)
@@ -283,30 +200,6 @@ void BehaviorTree::AddRootSelectorInAction(const string & SelectorKeyName, Actio
 	NewAction->SetActionType(BT_ACTION);
 	NewAction->SetKeepActionType(BT_SELECTOR);
 	NewAction->SetKeepAction(m_RootSelector);
-
-	m_vecAction.push_back(NewAction);
-}
-
-void BehaviorTree::AddRootDecoratorInAction(const string & DecoratorKeyName, Action * NewAction)
-{
-	if (m_RootNode == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_RootDecorator == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	m_RootDecorator->SetChild(NewAction);
-	NewAction->SetTag(DecoratorKeyName);
-	NewAction->SetTreeName(m_TagName);
-	NewAction->SetActionType(BT_ACTION);
-	NewAction->SetKeepActionType(BT_DECORATOR);
-	NewAction->SetKeepAction(m_RootDecorator);
 
 	m_vecAction.push_back(NewAction);
 }
@@ -348,26 +241,6 @@ void BehaviorTree::AddSelectorInAction(const string & SelectorKeyName, Action * 
 	NewAction->SetActionType(BT_ACTION);
 	NewAction->SetKeepActionType(BT_SEQUENCE);
 	NewAction->SetKeepAction(getSelector);
-
-	m_vecAction.push_back(NewAction);
-}
-
-void BehaviorTree::AddDecoratorInAction(const string & DecoratorKeyName, Action * NewAction)
-{
-	Decorator* getDecorator = FindDecorator(DecoratorKeyName);
-
-	if (getDecorator == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	getDecorator->SetChild(NewAction);
-	NewAction->SetTag(DecoratorKeyName);
-	NewAction->SetTreeName(m_TagName);
-	NewAction->SetActionType(BT_ACTION);
-	NewAction->SetKeepActionType(BT_DECORATOR);
-	NewAction->SetKeepAction(getDecorator);
 
 	m_vecAction.push_back(NewAction);
 }
@@ -430,36 +303,6 @@ void BehaviorTree::AddSelectorInSequence(const string & SelectorKeyName, const s
 	m_SequenceMap.insert(make_pair(SequenceKeyName, newSequence));
 }
 
-void BehaviorTree::AddSelectorInDecorator(const string & SelectorKeyName, const string & DecoratorKeyName)
-{
-	Selector* getSelector = FindSelector(SelectorKeyName);
-
-	if (getSelector == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	Decorator* newDecorator = FindDecorator(DecoratorKeyName);
-
-	if (newDecorator != NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	newDecorator = new Decorator();
-	newDecorator->SetTag(DecoratorKeyName);
-	newDecorator->SetTreeName(m_TagName);
-	newDecorator->SetActionType(BT_DECORATOR);
-	newDecorator->SetKeepActionType(BT_SELECTOR);
-	newDecorator->SetKeepAction(getSelector);
-
-	getSelector->AddChild(newDecorator);
-
-	m_DecoratorMap.insert(make_pair(DecoratorKeyName, newDecorator));
-}
-
 void BehaviorTree::AddSequenceInSequence(const string & OldSequenceKey, const string & NewSequenceKey)
 {
 	Sequence* getSelector = FindSequence(OldSequenceKey);
@@ -487,35 +330,6 @@ void BehaviorTree::AddSequenceInSequence(const string & OldSequenceKey, const st
 
 	getSelector->AddChild(newSequence);
 	m_SequenceMap.insert(make_pair(NewSequenceKey, newSequence));
-}
-
-void BehaviorTree::AddSequenceInDecorator(const string & SequenceKeyName, const string & DecoratorKeyName)
-{
-	Sequence* getSequence = FindSequence(SequenceKeyName);
-
-	if (getSequence == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	Decorator* newDecorator = FindDecorator(DecoratorKeyName);
-
-	if (newDecorator != NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	newDecorator = new Decorator();
-	newDecorator->SetTag(DecoratorKeyName);
-	newDecorator->SetTreeName(m_TagName);
-	newDecorator->SetActionType(BT_DECORATOR);
-	newDecorator->SetKeepActionType(BT_SEQUENCE);
-	newDecorator->SetKeepAction(getSequence);
-
-	getSequence->AddChild(newDecorator);
-	m_DecoratorMap.insert(make_pair(DecoratorKeyName, newDecorator));
 }
 
 void BehaviorTree::SetSelectorRandomProcess(const string & SelectorKeyName, bool Value)
@@ -568,7 +382,7 @@ void BehaviorTree::AddRootChildSelector()
 		return;
 	}
 
-	if (m_RootSequence != NULL || m_RootDecorator != NULL)
+	if (m_RootSequence != NULL)
 	{
 		assert(false);
 		return;
@@ -593,7 +407,7 @@ void BehaviorTree::AddRootChildSequence()
 		return;
 	}
 
-	if (m_RootSelector != NULL || m_RootDecorator != NULL)
+	if (m_RootSelector != NULL)
 	{
 		assert(false);
 		return;
@@ -610,30 +424,6 @@ void BehaviorTree::AddRootChildSequence()
 	m_RootNode->SetChild(m_RootSequence);
 }
 
-void BehaviorTree::AddRootChildDecorator()
-{
-	if (m_RootNode == NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	if (m_RootSelector != NULL || m_RootSequence != NULL)
-	{
-		assert(false);
-		return;
-	}
-
-	m_RootDecorator = new Decorator();
-	m_RootDecorator->SetTag("RootDecorator");
-	m_RootDecorator->SetActionType(BT_DECORATOR);
-	m_RootDecorator->SetKeepActionType(BT_ROOT);
-	m_RootDecorator->SetKeepAction(m_RootNode);
-
-	m_DecoratorMap.insert(make_pair("RootDecorator", m_RootDecorator));
-	m_RootNode->SetChild(m_RootDecorator);
-}
-
 void BehaviorTree::SetAllActionObject(CGameObject * Object)
 {
 	m_RootNode->SetObject(Object);
@@ -643,9 +433,6 @@ void BehaviorTree::SetAllActionObject(CGameObject * Object)
 
 	else if (m_RootSelector != NULL)
 		m_RootSelector->SetAllActionObject(Object);
-
-	else if (m_RootDecorator != NULL)
-		m_RootDecorator->SetObject(Object);
 }
 
 void BehaviorTree::Init(BT_ROOT_CHILD_TYPE eStyle)
@@ -663,9 +450,6 @@ void BehaviorTree::Init(BT_ROOT_CHILD_TYPE eStyle)
 		break;
 	case BT_SEQUENCE:
 		AddRootChildSequence();
-		break;
-	case BT_DECORATOR:
-		AddRootChildDecorator();
 		break;
 	}
 }
@@ -685,16 +469,6 @@ BehaviorTree::Selector * BehaviorTree::FindSelector(const string & KeyName)
 	auto FindIter = m_SelectorMap.find(KeyName);
 
 	if (FindIter == m_SelectorMap.end())
-		return NULL;
-
-	return FindIter->second;
-}
-
-BehaviorTree::Decorator * BehaviorTree::FindDecorator(const string & KeyName)
-{
-	auto FindIter = m_DecoratorMap.find(KeyName);
-
-	if (FindIter == m_DecoratorMap.end())
 		return NULL;
 
 	return FindIter->second;
@@ -804,36 +578,4 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 	}
 
 	return BAT_SUCCED;
-}
-
-int BehaviorTree::Decorator::Update(float DeltaTime)
-{
-	int Value = m_CheckFunc(DeltaTime);
-
-	if (Value == BAT_SUCCED)
-	{
-		BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildNode->Update(DeltaTime);
-		m_ChildNode->SetType(type);
-
-		switch (type)
-		{
-		case BAT_RUNNING:
-		{
-			Action* getAction = TreeManager::Get()->FindTree(m_TreeName)->m_CurAction;
-
-			if (getAction != NULL && getAction->GetType() != BAT_RUNNING)
-				return BAT_NONE;
-			else
-			{
-				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildNode;
-				return BAT_RUNNING;
-			}
-			break;
-		}}
-		return BAT_SUCCED;
-	}
-	else if(Value == BAT_RUNNING)
-		return BAT_RUNNING;
-
-	return BAT_FALSE;
 }
