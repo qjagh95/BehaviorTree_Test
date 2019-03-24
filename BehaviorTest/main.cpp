@@ -12,7 +12,6 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "의자에서 일어난다" << endl;
-
 		return ACTION_RUNNING;
 	}
 	
@@ -31,7 +30,11 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "보리차를 산다." << endl;
-		return ACTION_RUNNING;
+
+		if(GetAsyncKeyState(VK_SPACE) & 0x8000)
+			return ACTION_RUNNING;
+		else
+			return ACTION_FALSE;
 	}
 };
 
@@ -44,7 +47,7 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "물을 산다." << endl;
-		return ACTION_SUCCED;
+		return ACTION_FALSE;
 	}
 };
 
@@ -94,13 +97,11 @@ int main()
 	myState->AddRootSequenceInAction("sitDown", sitDown);
 
 	//게임루프 가정
-	//while (true)
-	//{	
-		myState->Update(1.0f);
+	while (true)
+	{	
+ 		myState->Update(1.0f);
+	}
 
-		//int a = getchar();
-		//if(a == ' ')
-		delete myState;
-		TreeManager::Delete();
-	//}
+	delete myState;
+	TreeManager::Delete();
 }

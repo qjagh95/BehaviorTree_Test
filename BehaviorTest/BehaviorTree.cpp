@@ -62,7 +62,7 @@ void BehaviorTree::Update(float DeltaTime)
 	switch (m_Type)
 	{
 	case ACTION_RUNNING:
-		m_CurAction->Update(DeltaTime);
+		m_Type = (BT_ACTION_TYPE)m_CurAction->Update(DeltaTime);
 		break;
 	case ACTION_NONE:
 	case ACTION_SUCCED:
@@ -508,7 +508,6 @@ int BehaviorTree::Selector::Update(float DeltaTime)
 {
 	if (m_vecDecorator.empty() == true)
 		return Process(DeltaTime);
-
 	else
 	{
 		bool Value = false;
@@ -519,10 +518,8 @@ int BehaviorTree::Selector::Update(float DeltaTime)
 			if (Value == false)
 				return ACTION_SUCCED;
 		}
-
 		return Process(DeltaTime);
 	}
-	
 }
 
 int BehaviorTree::Selector::Process(float DeltaTime)
@@ -543,15 +540,7 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 			case ACTION_FALSE:
 				break;
 			case ACTION_RUNNING:
-				Action* getAction = TreeManager::Get()->FindTree(m_TreeName)->m_CurAction;
-
-				if (getAction != NULL && getAction->GetType() == ACTION_RUNNING)
-					return ACTION_NONE;
-				else
-				{
-					TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
-					return ACTION_RUNNING;
-				}
+				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
 				return ACTION_RUNNING;
 				break;
 			}
@@ -575,18 +564,9 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 			return ACTION_FALSE;
 			break;
 		case ACTION_RUNNING:
-		{
-			Action* getAction = TreeManager::Get()->FindTree(m_TreeName)->m_CurAction;
-
-			if (getAction != NULL && getAction->GetType() != ACTION_RUNNING)
-				return ACTION_NONE;
-			else
-			{
-				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[RandomNum];
-				return ACTION_RUNNING;
-			}
-		}
-		break;
+			TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[RandomNum];
+			return ACTION_RUNNING;
+			break;
 		}
 		return ACTION_FALSE;
 	}

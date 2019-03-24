@@ -248,6 +248,5 @@ private:
 public:
 	~BehaviorTree();
 
-
 	friend class TreeManager;
 };

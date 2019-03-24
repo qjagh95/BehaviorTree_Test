@@ -23,7 +23,7 @@ public:
 	}
 
 public:
-	BehaviorTree* CreateBehaviorTree(const string& KeyName, BT_ROOT_CHILD_TYPE eStyle = BT_SEQUENCE);
+	BehaviorTree* CreateBehaviorTree(const string& KeyName, BT_ROOT_CHILD_TYPE eStyle = BT_SELECTOR);
 	BehaviorTree* FindTree(const string& KeyName);
 
 private:
