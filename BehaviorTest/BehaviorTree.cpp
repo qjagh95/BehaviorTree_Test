@@ -9,38 +9,64 @@ BehaviorTree::BehaviorTree()
 	m_RootSelector = NULL;
 	m_CurAction = NULL;
 	m_isOnePath = false;
-	m_Type = BAT_NONE;
+	m_Type = ACTION_NONE;
 }
 
 BehaviorTree::~BehaviorTree()
 {
-	unordered_map<string, Sequence*>::iterator StartIter = m_SequenceMap.begin();
-	unordered_map<string, Sequence*>::iterator EndIter = m_SequenceMap.end();
+	TreeManager::Get()->Delete(m_TagName);
 
-	for (; StartIter != EndIter; StartIter++)
-		delete StartIter->second;
+	if (m_RootSequence != NULL)
+	{
+		delete m_RootSequence;
+		m_RootSequence = NULL;
+	}
+
+	if (m_RootSelector != NULL)
+	{
+		delete m_RootSelector;
+		m_RootSelector = NULL;
+	}
+
+	if (m_RootNode != NULL)
+	{
+		delete m_RootNode;
+		m_RootNode = NULL;
+	}
 
 	unordered_map<string, Selector*>::iterator StartIter1 = m_SelectorMap.begin();
 	unordered_map<string, Selector*>::iterator EndIter1 = m_SelectorMap.end();
 
 	for (; StartIter1 != EndIter1; StartIter1++)
+	{
 		delete StartIter1->second;
+	}
+
+	unordered_map<string, Sequence*>::iterator StartIter = m_SequenceMap.begin();
+	unordered_map<string, Sequence*>::iterator EndIter = m_SequenceMap.end();
+
+	for (; StartIter != EndIter; StartIter++)
+	{
+		delete StartIter->second;
+	}
 
 	for (size_t i = 0; i < m_vecAction.size(); i++)
+	{
 		delete m_vecAction[i];
+		m_vecAction[i] = NULL;
+	}
 }
 
 void BehaviorTree::Update(float DeltaTime)
 {
 	switch (m_Type)
 	{
-	case BAT_RUNNING:
-			m_CurAction->Update(DeltaTime);
-			break;
+	case ACTION_RUNNING:
+		m_CurAction->Update(DeltaTime);
 		break;
-	case BAT_NONE:
-	case BAT_SUCCED:
-	case BAT_FALSE:
+	case ACTION_NONE:
+	case ACTION_SUCCED:
+	case ACTION_FALSE:
 		m_Type = (BT_ACTION_TYPE)m_RootNode->Update(DeltaTime);
 		break;
 	}
@@ -395,7 +421,6 @@ void BehaviorTree::AddRootChildSelector()
 	m_RootSelector->SetKeepActionType(BT_ROOT);
 	m_RootSelector->SetKeepAction(m_RootNode);
 
-	m_SelectorMap.insert(make_pair("RootSelector", m_RootSelector));
 	m_RootNode->SetChild(m_RootSelector);
 }
 
@@ -420,7 +445,6 @@ void BehaviorTree::AddRootChildSequence()
 	m_RootSequence->SetKeepActionType(BT_ROOT);
 	m_RootSequence->SetKeepAction(m_RootNode);
 
-	m_SequenceMap.insert(make_pair("RootSequence", m_RootSequence));
 	m_RootNode->SetChild(m_RootSequence);
 }
 
@@ -493,7 +517,7 @@ int BehaviorTree::Selector::Update(float DeltaTime)
 			Value = m_vecDecorator[i](DeltaTime);
 			
 			if (Value == false)
-				return BAT_SUCCED;
+				return ACTION_SUCCED;
 		}
 
 		return Process(DeltaTime);
@@ -512,27 +536,27 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 
 			switch (type)
 			{
-			case BAT_SUCCED:
+			case ACTION_SUCCED:
 				m_ChildList[i]->Ending(DeltaTime);
-				return BAT_SUCCED;
+				return ACTION_SUCCED;
 				break;
-			case BAT_FALSE:
+			case ACTION_FALSE:
 				break;
-			case BAT_RUNNING:
+			case ACTION_RUNNING:
 				Action* getAction = TreeManager::Get()->FindTree(m_TreeName)->m_CurAction;
 
-				if (getAction != NULL && getAction->GetType() == BAT_RUNNING)
-					return BAT_NONE;
+				if (getAction != NULL && getAction->GetType() == ACTION_RUNNING)
+					return ACTION_NONE;
 				else
 				{
 					TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
-					return BAT_RUNNING;
+					return ACTION_RUNNING;
 				}
-				return BAT_RUNNING;
+				return ACTION_RUNNING;
 				break;
 			}
 		}
-		return BAT_FALSE;
+		return ACTION_FALSE;
 	}
 	else
 	{
@@ -543,28 +567,28 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 
 		switch (type)
 		{
-		case BAT_SUCCED:
+		case ACTION_SUCCED:
 			m_ChildList[RandomNum]->Ending(DeltaTime);
-			return BAT_SUCCED;
+			return ACTION_SUCCED;
 			break;
-		case BAT_FALSE:
-			return BAT_FALSE;
+		case ACTION_FALSE:
+			return ACTION_FALSE;
 			break;
-		case BAT_RUNNING:
+		case ACTION_RUNNING:
 		{
 			Action* getAction = TreeManager::Get()->FindTree(m_TreeName)->m_CurAction;
 
-			if (getAction != NULL && getAction->GetType() != BAT_RUNNING)
-				return BAT_NONE;
+			if (getAction != NULL && getAction->GetType() != ACTION_RUNNING)
+				return ACTION_NONE;
 			else
 			{
 				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[RandomNum];
-				return BAT_RUNNING;
+				return ACTION_RUNNING;
 			}
 		}
 		break;
 		}
-		return BAT_FALSE;
+		return ACTION_FALSE;
 	}
 }
 
@@ -579,15 +603,15 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 
 			switch (type)
 			{
-			case BAT_RUNNING:
+			case ACTION_RUNNING:
 				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
-				return BAT_RUNNING;
+				return ACTION_RUNNING;
 				break;
-			case BAT_FALSE:
+			case ACTION_FALSE:
 				m_ChildList[i]->Ending(DeltaTime);
-				return BAT_FALSE;
+				return ACTION_FALSE;
 				break;
-			case BAT_SUCCED:
+			case ACTION_SUCCED:
 				break;
 			}
 		}
@@ -600,7 +624,7 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 			Value =  m_vecDecorator[i](DeltaTime);
 
 			if (Value == false)
-				return BAT_FALSE;
+				return ACTION_FALSE;
 		}
 
 		for (size_t i = 0; i < m_ChildList.size(); i++)
@@ -610,19 +634,19 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 
 			switch (type)
 			{
-			case BAT_RUNNING:
+			case ACTION_RUNNING:
 				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
-				return BAT_RUNNING;
+				return ACTION_RUNNING;
 				break;
-			case BAT_FALSE:
+			case ACTION_FALSE:
 				m_ChildList[i]->Ending(DeltaTime);
-				return BAT_FALSE;
+				return ACTION_FALSE;
 				break;
-			case BAT_SUCCED:
+			case ACTION_SUCCED:
 				break;
 			}
 		}
 	}
 
-	return BAT_SUCCED;
+	return ACTION_SUCCED;
 }

@@ -26,7 +26,8 @@ public:
 		Action* GetKeepAction() const { return m_KeepNode; }
 
 	protected:
-		Action() { m_KeepNode = NULL; m_pObject = NULL; m_Type = BAT_NONE; m_NodeType = BT_NONE; m_KeepNodeType = BT_NONE; }
+		Action() { m_KeepNode = NULL; m_pObject = NULL; m_Type = ACTION_NONE; m_NodeType = BT_NONE; m_KeepNodeType = BT_NONE; }
+
 		string m_TagName;
 		string m_TreeName;
 		BT_ACTION_TYPE m_Type;
@@ -54,8 +55,11 @@ public:
 		CompositNode() {}
 		virtual ~CompositNode()
 		{
-			for (size_t i = 0; i < m_ChildList.size(); i++)
-				delete m_ChildList[i];
+			//for (size_t i = 0; i < m_ChildList.size(); i++)
+			//{
+			//	delete m_ChildList[i];
+			//	m_ChildList[i] = NULL;
+			//}
 		}
 	};
 
@@ -79,6 +83,7 @@ public:
 	private:
 		int Process(float DeltaTime);
 		Selector() { m_bRandom = false; m_vecDecorator.reserve(4); }
+		~Selector() {}
 
 	private:
 		bool m_bRandom;
@@ -106,6 +111,8 @@ public:
 
 	private:
 		Sequence() { m_vecDecorator.reserve(4); }
+		~Sequence() {}
+
 		vector<function<bool(float)>> m_vecDecorator;
 
 	public:
@@ -128,6 +135,7 @@ public:
 		}
 	private:
 		Action* m_ChildNode;
+		~RootNode() {}
 
 	public:
 		friend class BehaviorTree;
@@ -164,7 +172,7 @@ public:
 	}
 
 	template<typename T>
-	void AddSquenceInDecorator(const string& SequenceKeyName, T* object, int(T::*pFunc)(float))
+	void AddSquenceInDecorator(const string& SequenceKeyName, T* object, bool(T::*pFunc)(float))
 	{
 		Sequence* getSquence = FindSequence(SequenceKeyName);
 
@@ -191,7 +199,7 @@ public:
 	}
 
 	template<typename T>
-	void AddSelectorInDecorator(const string& SelectorKeyName, T* object, int(T::*pFunc)(float))
+	void AddSelectorInDecorator(const string& SelectorKeyName, T* object, bool(T::*pFunc)(float))
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
@@ -204,11 +212,11 @@ public:
 		getSelector->AddDecorator(object, pFunc);
 	}
 
-
 	Sequence* GetRootSequence() const { return m_RootSequence; }
-	RootNode* GetRootNode() const { return m_RootNode; }
-
+	RootNode* GetRoot() const { return m_RootNode; }
+	Selector* GetRootSelector() const { return m_RootSelector; }
 	CGameObject* GetObject() const { return m_RootNode->GetObject(); }
+
 	void SetAllActionObject(CGameObject* Object);
 
 private:
@@ -236,7 +244,10 @@ private:
 
 private:
 	BehaviorTree();
+
+public:
 	~BehaviorTree();
+
 
 	friend class TreeManager;
 };

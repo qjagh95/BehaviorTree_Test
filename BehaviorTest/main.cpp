@@ -12,7 +12,8 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "의자에서 일어난다" << endl;
-		return BAT_SUCCED;
+
+		return ACTION_RUNNING;
 	}
 	
 	void Ending(float DeltaTime) override
@@ -30,7 +31,7 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "보리차를 산다." << endl;
-		return BAT_SUCCED;
+		return ACTION_RUNNING;
 	}
 };
 
@@ -43,10 +44,9 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "물을 산다." << endl;
-		return BAT_SUCCED;
+		return ACTION_SUCCED;
 	}
 };
-
 
 class MyHome : public BehaviorTree::Action
 {
@@ -57,36 +57,34 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "내 자리로 간다." << endl;
-		return BAT_SUCCED;
+		return ACTION_SUCCED;
 	}
 };
 
 class SitDown : public BehaviorTree::Action
 {
 public:
-	SitDown() { }
+	SitDown() {}
 	~SitDown() {}
 
 	int Update(float DeltaTime) override
 	{
-		cout << "의자에 앉는다." << endl;
-		return BAT_RUNNING;
+		cout << "의자에 앉는다" << endl;
+		return ACTION_SUCCED;
 	}
 };
-
 
 int main() 
 {
 	srand(time(NULL));
 
-	ChairUp* chairUp = new ChairUp();
+	//ChairUp* chairUp = new ChairUp();
 	RandomSelectAction1* ranAction1 = new RandomSelectAction1();
 	RandomSelectAction2* ranAction2 = new RandomSelectAction2();
 	MyHome* myHome = new MyHome();
 	SitDown* sitDown = new SitDown();
 
 	BehaviorTree* myState = TreeManager::Get()->CreateBehaviorTree("PlayerState");
-	myState->AddRootSequenceInAction("ChairUp", chairUp);
 
 	myState->AddRootSequenceInSelector("RandomSelector");
 	myState->AddSelectorInAction("RandomSelector", ranAction1);
@@ -95,12 +93,14 @@ int main()
 	myState->AddRootSequenceInAction("MyHome", myHome);
 	myState->AddRootSequenceInAction("sitDown", sitDown);
 
-	myState->SetSelectorRandomProcess("RandomSelector", true);
-
 	//게임루프 가정
-	while (true)
-	{	
+	//while (true)
+	//{	
 		myState->Update(1.0f);
-	}
 
+		//int a = getchar();
+		//if(a == ' ')
+		delete myState;
+		TreeManager::Delete();
+	//}
 }
