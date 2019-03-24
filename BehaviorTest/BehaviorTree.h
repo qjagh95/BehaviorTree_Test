@@ -65,9 +65,24 @@ public:
 		virtual int Update(float DeltaTime) override;
 		void SetRandomProcess(bool Value) { m_bRandom = Value; }
 
+		void AddDecorator(bool(*pFunc)(float))
+		{
+			m_vecDecorator.push_back(bind(pFunc, placeholders::_1));
+		}
+
+		template<typename T>
+		void AddDecorator(T* object, bool(T::*pFunc)(float))
+		{
+			m_vecDecorator.push_back(bind(pFunc,object, placeholders::_1));
+		}
+
 	private:
-		Selector() { m_bRandom = false; }
+		int Process(float DeltaTime);
+		Selector() { m_bRandom = false; m_vecDecorator.reserve(4); }
+
+	private:
 		bool m_bRandom;
+		vector<function<bool(float)>> m_vecDecorator;
 
 	public:
 		friend class BehaviorTree;
@@ -78,8 +93,24 @@ public:
 	public:
 		virtual int Update(float DeltaTime) override;
 
+		void AddDecorator(bool(*pFunc)(float))
+		{
+			m_vecDecorator.push_back(bind(pFunc, placeholders::_1));
+		}
+
+		template<typename T>
+		void AddDecorator(T* object, bool(T::*pFunc)(float))
+		{
+			m_vecDecorator.push_back(bind(pFunc, object, placeholders::_1));
+		}
+
+	private:
+		Sequence() { m_vecDecorator.reserve(4); }
+		vector<function<bool(float)>> m_vecDecorator;
+
 	public:
 		friend class BehaviorTree;
+
 	};
 
 	class RootNode : public Action
@@ -95,7 +126,6 @@ public:
 		{
 			return m_ChildNode->Ending(DeltaTime);
 		}
-
 	private:
 		Action* m_ChildNode;
 
@@ -119,6 +149,61 @@ public:
 	void AddSelectorInSelector(const string& OldSelectorKey, const string& NewSelector);
 	void AddSelectorInSequence(const string& SelectorKeyName, const string& SequenceKeyName);
 	void SetSelectorRandomProcess(const string& SelectorKeyName, bool Value);
+
+	void AddSquenceInDecorator(const string& SequenceKeyName, bool(*pFunc)(float))
+	{
+		Sequence* getSquence = FindSequence(SequenceKeyName);
+
+		if (getSquence == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getSquence->AddDecorator(pFunc);
+	}
+
+	template<typename T>
+	void AddSquenceInDecorator(const string& SequenceKeyName, T* object, int(T::*pFunc)(float))
+	{
+		Sequence* getSquence = FindSequence(SequenceKeyName);
+
+		if (getSquence == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getSquence->AddDecorator(object, pFunc);
+	}
+
+	void AddSelectorInDecorator(const string& SelectorKeyName, bool(*pFunc)(float))
+	{
+		Selector* getSelector = FindSelector(SelectorKeyName);
+
+		if (getSelector == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getSelector->AddDecorator(pFunc);
+	}
+
+	template<typename T>
+	void AddSelectorInDecorator(const string& SelectorKeyName, T* object, int(T::*pFunc)(float))
+	{
+		Selector* getSelector = FindSelector(SelectorKeyName);
+
+		if (getSelector == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getSelector->AddDecorator(object, pFunc);
+	}
+
 
 	Sequence* GetRootSequence() const { return m_RootSequence; }
 	RootNode* GetRootNode() const { return m_RootNode; }

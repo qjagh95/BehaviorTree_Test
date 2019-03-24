@@ -482,6 +482,27 @@ void BehaviorTree::CompositNode::SetAllActionObject(CGameObject * Object)
 
 int BehaviorTree::Selector::Update(float DeltaTime)
 {
+	if (m_vecDecorator.empty() == true)
+		return Process(DeltaTime);
+
+	else
+	{
+		bool Value = false;
+		for (size_t i = 0; i < m_vecDecorator.size(); i++)
+		{
+			Value = m_vecDecorator[i](DeltaTime);
+			
+			if (Value == false)
+				return BAT_SUCCED;
+		}
+
+		return Process(DeltaTime);
+	}
+	
+}
+
+int BehaviorTree::Selector::Process(float DeltaTime)
+{
 	if (m_bRandom == false)
 	{
 		for (size_t i = 0; i < m_ChildList.size(); i++)
@@ -530,7 +551,7 @@ int BehaviorTree::Selector::Update(float DeltaTime)
 			return BAT_FALSE;
 			break;
 		case BAT_RUNNING:
-		{	
+		{
 			Action* getAction = TreeManager::Get()->FindTree(m_TreeName)->m_CurAction;
 
 			if (getAction != NULL && getAction->GetType() != BAT_RUNNING)
@@ -541,7 +562,7 @@ int BehaviorTree::Selector::Update(float DeltaTime)
 				return BAT_RUNNING;
 			}
 		}
-			break;
+		break;
 		}
 		return BAT_FALSE;
 	}
@@ -549,31 +570,57 @@ int BehaviorTree::Selector::Update(float DeltaTime)
 
 int BehaviorTree::Sequence::Update(float DeltaTime)
 {
-	for (size_t i = 0; i < m_ChildList.size(); i++)
+	if (m_vecDecorator.empty() == true)
 	{
-		BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildList[i]->Update(DeltaTime);
-		m_ChildList[i]->SetType(type);
-
-		switch (type)
+		for (size_t i = 0; i < m_ChildList.size(); i++)
 		{
-		case BAT_RUNNING:
-		{
-			Action* getAction = TreeManager::Get()->FindTree(m_TreeName)->m_CurAction;
+			BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildList[i]->Update(DeltaTime);
+			m_ChildList[i]->SetType(type);
 
-			if (getAction != NULL && getAction->GetType() != BAT_RUNNING)
-				return BAT_NONE;
-			else
+			switch (type)
 			{
+			case BAT_RUNNING:
 				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
 				return BAT_RUNNING;
+				break;
+			case BAT_FALSE:
+				m_ChildList[i]->Ending(DeltaTime);
+				return BAT_FALSE;
+				break;
+			case BAT_SUCCED:
+				break;
 			}
 		}
-		case BAT_FALSE:
-			m_ChildList[i]->Ending(DeltaTime);
-			return BAT_FALSE;
-			break;
-		case BAT_SUCCED:
-			break;
+	}
+	else
+	{
+		bool Value = false;
+		for (size_t i = 0; i < m_vecDecorator.size(); i++)
+		{
+			Value =  m_vecDecorator[i](DeltaTime);
+
+			if (Value == false)
+				return BAT_FALSE;
+		}
+
+		for (size_t i = 0; i < m_ChildList.size(); i++)
+		{
+			BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildList[i]->Update(DeltaTime);
+			m_ChildList[i]->SetType(type);
+
+			switch (type)
+			{
+			case BAT_RUNNING:
+				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
+				return BAT_RUNNING;
+				break;
+			case BAT_FALSE:
+				m_ChildList[i]->Ending(DeltaTime);
+				return BAT_FALSE;
+				break;
+			case BAT_SUCCED:
+				break;
+			}
 		}
 	}
 

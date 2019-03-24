@@ -21,31 +21,6 @@ public:
 	}
 };
 
-class isMyMoney : public BehaviorTree::Action
-{
-public:
-	int myMoney;
-
-	isMyMoney() { myMoney = 300; }
-	~isMyMoney() {}
-
-	int Check(float DeltaTime)
-	{
-		cout << "내돈이 200원 이상 체크한다." << endl;
-
-		if (myMoney >= 200)
-			return BAT_SUCCED;
-		else
-			return BAT_RUNNING;
-	}
-
-	int Update(float DeltaTime) override
-	{
-		cout << "자판기로 간다." << endl;
-		return BAT_SUCCED;
-	}
-};
-
 class RandomSelectAction1 : public BehaviorTree::Action
 {
 public:
@@ -55,7 +30,7 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "보리차를 산다." << endl;
-		return BAT_RUNNING;
+		return BAT_SUCCED;
 	}
 };
 
@@ -68,7 +43,7 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "물을 산다." << endl;
-		return BAT_RUNNING;
+		return BAT_SUCCED;
 	}
 };
 
@@ -76,13 +51,13 @@ public:
 class MyHome : public BehaviorTree::Action
 {
 public:
-	MyHome() { }
+	MyHome() {}
 	~MyHome() {}
 
 	int Update(float DeltaTime) override
 	{
 		cout << "내 자리로 간다." << endl;
-		return BAT_RUNNING;
+		return BAT_SUCCED;
 	}
 };
 
@@ -105,7 +80,6 @@ int main()
 	srand(time(NULL));
 
 	ChairUp* chairUp = new ChairUp();
-	isMyMoney* newMyMoney = new isMyMoney();
 	RandomSelectAction1* ranAction1 = new RandomSelectAction1();
 	RandomSelectAction2* ranAction2 = new RandomSelectAction2();
 	MyHome* myHome = new MyHome();
@@ -113,9 +87,6 @@ int main()
 
 	BehaviorTree* myState = TreeManager::Get()->CreateBehaviorTree("PlayerState");
 	myState->AddRootSequenceInAction("ChairUp", chairUp);
-	myState->AddRootSequenceInDecorator("CheckDecorator");
-	myState->AddDecoratorInAction("CheckDecorator", newMyMoney);
-	myState->SetDecoratorCheckFunc("CheckDecorator", newMyMoney, &isMyMoney::Check);
 
 	myState->AddRootSequenceInSelector("RandomSelector");
 	myState->AddSelectorInAction("RandomSelector", ranAction1);
