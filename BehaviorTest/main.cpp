@@ -21,11 +21,11 @@ public:
 	}
 };
 
-class RandomSelectAction1 : public BehaviorTree::Action
+class Action1 : public BehaviorTree::Action
 {
 public:
-	RandomSelectAction1() { }
-	~RandomSelectAction1() {}
+	Action1() { }
+	~Action1() {}
 
 	int Update(float DeltaTime) override
 	{
@@ -38,11 +38,11 @@ public:
 	}
 };
 
-class RandomSelectAction2 : public BehaviorTree::Action
+class Action2 : public BehaviorTree::Action
 {
 public:
-	RandomSelectAction2() { }
-	~RandomSelectAction2() {}
+	Action2() { }
+	~Action2() {}
 
 	int Update(float DeltaTime) override
 	{
@@ -82,8 +82,8 @@ int main()
 	srand(time(NULL));
 
 	//ChairUp* chairUp = new ChairUp();
-	RandomSelectAction1* ranAction1 = new RandomSelectAction1();
-	RandomSelectAction2* ranAction2 = new RandomSelectAction2();
+	Action1* ranAction1 = new Action1();
+	Action2* ranAction2 = new Action2();
 	MyHome* myHome = new MyHome();
 	SitDown* sitDown = new SitDown();
 

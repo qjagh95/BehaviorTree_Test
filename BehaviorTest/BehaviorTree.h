@@ -18,21 +18,15 @@ public:
 		CGameObject* GetObject() const { return m_pObject; }
 		BT_ACTION_TYPE GetType() const { return m_Type; }
 		void SetType(BT_ACTION_TYPE type) { m_Type = type; }
-		BT_ROOT_CHILD_TYPE GetActionType() const { return m_NodeType; }
-		void SetActionType(BT_ROOT_CHILD_TYPE type) { m_NodeType = type; }
-		void SetKeepActionType(BT_ROOT_CHILD_TYPE type) { m_KeepNodeType = type; }
-		BT_ROOT_CHILD_TYPE GetKeepActionType() const { return m_KeepNodeType; }
 		void SetKeepAction(Action* action) { m_KeepNode = action; }
 		Action* GetKeepAction() const { return m_KeepNode; }
 
 	protected:
-		Action() { m_KeepNode = NULL; m_pObject = NULL; m_Type = ACTION_NONE; m_NodeType = BT_NONE; m_KeepNodeType = BT_NONE; }
+		Action() { m_KeepNode = NULL; m_pObject = NULL; m_Type = ACTION_NONE; }
 
 		string m_TagName;
 		string m_TreeName;
 		BT_ACTION_TYPE m_Type;
-		BT_ROOT_CHILD_TYPE m_NodeType;
-		BT_ROOT_CHILD_TYPE m_KeepNodeType;
 		Action* m_KeepNode;
 
 	private:
