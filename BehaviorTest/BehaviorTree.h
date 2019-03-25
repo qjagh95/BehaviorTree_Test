@@ -88,6 +88,9 @@ public:
 			m_TickFunc = bind(pFunc, object, placeholders::_1);
 		}
 
+		void DisableTickFunc() { m_isCheck = false; }
+		void EnableTickFunc() { m_isCheck = true; }
+
 	private:
 		int Process(float DeltaTime);
 		Selector() { m_bRandom = false; m_vecDecorator.reserve(4); m_TimeVar = 0.0f; m_CheckTime = 0.0f; m_isCheck = false; }
@@ -136,8 +139,11 @@ public:
 			m_TickFunc = bind(pFunc, object, placeholders::_1);
 		}
 
+		void DisableTickFunc() { m_isCheck = false; }
+		void EnableTickFunc() { m_isCheck = true; }
+
 	private:
-		Sequence() { m_vecDecorator.reserve(4);	m_TimeVar = 0.0f; m_CheckTime = 0.0f; }
+		Sequence() { m_vecDecorator.reserve(4);	m_TimeVar = 0.0f; m_CheckTime = 0.0f; m_isCheck = false; }
 		~Sequence() {}
 
 		vector<function<bool(float)>> m_vecDecorator;
@@ -188,6 +194,10 @@ public:
 	void AddSelectorInSelector(const string& OldSelectorKey, const string& NewSelector);
 	void AddSelectorInSequence(const string& SelectorKeyName, const string& SequenceKeyName);
 	void SetSelectorRandomProcess(const string& SelectorKeyName, bool Value);
+	void SequenceTickFuncDisable(const string& SequenceKeyName);
+	void SequenceTickFuncEnable(const string& SequenceKeyName);
+	void SelectorTickFuncDisable(const string& SelectorKeyName);
+	void SelectorTickFuncEnable(const string& SelectorKeyName);
 
 	void AddSquenceInDecorator(const string& SequenceKeyName, bool(*pFunc)(float))
 	{
@@ -243,7 +253,7 @@ public:
 		getSelector->AddDecorator(object, pFunc);
 	}
 
-	void AddSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, void(*pFunc)(float))
+	void SetSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, void(*pFunc)(float))
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
@@ -257,7 +267,7 @@ public:
 	}
 
 	template<typename T>
-	void AddSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, T* object, void(T::*pFunc)(float))
+	void SetSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, T* object, void(T::*pFunc)(float))
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
@@ -270,7 +280,7 @@ public:
 		getSelector->AddTickFunc(CallbackTime, object, pFunc);
 	}
 
-	void AddSequenceInTickFunc(const string& SequenceKeyName, float CallbackTime, void(*pFunc)(float))
+	void SetSequenceInTickFunc(const string& SequenceKeyName, float CallbackTime, void(*pFunc)(float))
 	{
 		Sequence* getSequence = FindSequence(SequenceKeyName);
 
@@ -284,7 +294,7 @@ public:
 	}
 
 	template<typename T>
-	void AddSequenceInTickFunc(const string& SequenceKeyName, float CallbackTime, T* object, void(T::*pFunc)(float))
+	void SetSequenceInTickFunc(const string& SequenceKeyName, float CallbackTime, T* object, void(T::*pFunc)(float))
 	{
 		Sequence* getSequence = FindSequence(SequenceKeyName);
 

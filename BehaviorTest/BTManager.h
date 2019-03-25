@@ -17,10 +17,7 @@ public:
 		delete m_Instance;
 	}
 
-	void Delete(const string& BTName)
-	{
-		m_TreeMap.erase(BTName);
-	}
+	void Delete(const string& BTName);
 
 public:
 	BehaviorTree* CreateBehaviorTree(const string& KeyName, BT_ROOT_CHILD_TYPE eStyle = BT_SELECTOR);

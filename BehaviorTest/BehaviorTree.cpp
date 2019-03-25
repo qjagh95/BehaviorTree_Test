@@ -370,6 +370,58 @@ void BehaviorTree::SetSelectorRandomProcess(const string & SelectorKeyName, bool
 	getSelector->SetRandomProcess(Value);
 }
 
+void BehaviorTree::SequenceTickFuncDisable(const string & SequenceKeyName)
+{
+	Sequence* getSequence = FindSequence(SequenceKeyName);
+
+	if (getSequence == NULL)
+	{
+		assert(false);
+		return;
+	}
+
+	getSequence->DisableTickFunc();
+}
+
+void BehaviorTree::SequenceTickFuncEnable(const string & SequenceKeyName)
+{
+	Sequence* getSequence = FindSequence(SequenceKeyName);
+
+	if (getSequence == NULL)
+	{
+		assert(false);
+		return;
+	}
+
+	getSequence->EnableTickFunc();
+}
+
+void BehaviorTree::SelectorTickFuncDisable(const string & SelectorKeyName)
+{
+	Selector* getSelector = FindSelector(SelectorKeyName);
+
+	if (getSelector == NULL)
+	{
+		assert(false);
+		return;
+	}
+
+	getSelector->DisableTickFunc();
+}
+
+void BehaviorTree::SelectorTickFuncEnable(const string & SelectorKeyName)
+{
+	Selector* getSelector = FindSelector(SelectorKeyName);
+
+	if (getSelector == NULL)
+	{
+		assert(false);
+		return;
+	}
+
+	getSelector->EnableTickFunc();
+}
+
 void BehaviorTree::AddSelectorInSelector(const string & OldSelectorKey, const string & NewSelector)
 {
 	Selector* getSelector = FindSelector(OldSelectorKey);
