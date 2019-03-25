@@ -20,7 +20,7 @@
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="TreeManager.cpp">
+    <ClCompile Include="BTManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -31,7 +31,7 @@
     <ClInclude Include="BehaviorTree.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
-    <ClInclude Include="TreeManager.h">
+    <ClInclude Include="BTManager.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
   </ItemGroup>

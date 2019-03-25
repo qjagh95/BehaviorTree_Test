@@ -1,7 +1,7 @@
 ﻿#include "pch.h"
 #include <Windows.h>
 #include "BehaviorTree.h"
-#include "TreeManager.h"
+#include "BTManager.h"
 
 class ChairUp : public BehaviorTree::Action
 {
@@ -87,7 +87,7 @@ int main()
 	MyHome* myHome = new MyHome();
 	SitDown* sitDown = new SitDown();
 
-	BehaviorTree* myState = TreeManager::Get()->CreateBehaviorTree("PlayerState");
+	BehaviorTree* myState = BTManager::Get()->CreateBehaviorTree("PlayerState", BT_SEQUENCE);
 
 	myState->AddRootSequenceInSelector("RandomSelector");
 	myState->AddSelectorInAction("RandomSelector", ranAction1);
@@ -99,9 +99,9 @@ int main()
 	//게임루프 가정
 	while (true)
 	{	
- 		myState->Update(1.0f);
+  		myState->Update(1.0f);
 	}
 
 	delete myState;
-	TreeManager::Delete();
+	BTManager::Delete();
 }

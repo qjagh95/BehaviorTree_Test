@@ -53,14 +53,7 @@ public:
 		vector<Action*> m_ChildList;
 
 		CompositNode() {}
-		virtual ~CompositNode()
-		{
-			//for (size_t i = 0; i < m_ChildList.size(); i++)
-			//{
-			//	delete m_ChildList[i];
-			//	m_ChildList[i] = NULL;
-			//}
-		}
+		virtual ~CompositNode()	{}
 	};
 
 	class Selector : public CompositNode
@@ -80,14 +73,33 @@ public:
 			m_vecDecorator.push_back(bind(pFunc,object, placeholders::_1));
 		}
 
+		void AddTickFunc(float CallbackTime, void(*pFunc)(float))
+		{
+			m_isCheck = true;
+			m_CheckTime = CallbackTime;
+			m_TickFunc = bind(pFunc, placeholders::_1);
+		}
+
+		template<typename T>
+		void AddTickFunc(float CallbackTime, T* object, void(T::*pFunc)(float))
+		{
+			m_isCheck = true
+			m_CheckTime = CallbackTime;
+			m_TickFunc = bind(pFunc, object, placeholders::_1);
+		}
+
 	private:
 		int Process(float DeltaTime);
-		Selector() { m_bRandom = false; m_vecDecorator.reserve(4); }
+		Selector() { m_bRandom = false; m_vecDecorator.reserve(4); m_TimeVar = 0.0f; m_CheckTime = 0.0f; m_isCheck = false; }
 		~Selector() {}
 
 	private:
 		bool m_bRandom;
 		vector<function<bool(float)>> m_vecDecorator;
+		function<void(float)> m_TickFunc;
+		float m_TimeVar;
+		float m_CheckTime;
+		bool m_isCheck;
 
 	public:
 		friend class BehaviorTree;
@@ -109,11 +121,30 @@ public:
 			m_vecDecorator.push_back(bind(pFunc, object, placeholders::_1));
 		}
 
+		void AddTickFunc(float CallbackTime, void(*pFunc)(float))
+		{
+			m_isCheck = true;
+			m_CheckTime = CallbackTime;
+			m_TickFunc = bind(pFunc, placeholders::_1);
+		}
+
+		template<typename T>
+		void AddTickFunc(float CallbackTime, T* object, void(T::*pFunc)(float))
+		{
+			m_isCheck = true;
+			m_CheckTime = CallbackTime;
+			m_TickFunc = bind(pFunc, object, placeholders::_1);
+		}
+
 	private:
-		Sequence() { m_vecDecorator.reserve(4); }
+		Sequence() { m_vecDecorator.reserve(4);	m_TimeVar = 0.0f; m_CheckTime = 0.0f; }
 		~Sequence() {}
 
 		vector<function<bool(float)>> m_vecDecorator;
+		function<void(float)> m_TickFunc;
+		float m_TimeVar;
+		float m_CheckTime;
+		bool m_isCheck; 
 
 	public:
 		friend class BehaviorTree;
@@ -212,12 +243,65 @@ public:
 		getSelector->AddDecorator(object, pFunc);
 	}
 
-	Sequence* GetRootSequence() const { return m_RootSequence; }
-	RootNode* GetRoot() const { return m_RootNode; }
-	Selector* GetRootSelector() const { return m_RootSelector; }
-	CGameObject* GetObject() const { return m_RootNode->GetObject(); }
+	void AddSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, void(*pFunc)(float))
+	{
+		Selector* getSelector = FindSelector(SelectorKeyName);
 
-	void SetAllActionObject(CGameObject* Object);
+		if (getSelector == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getSelector->AddTickFunc(CallbackTime, pFunc);
+	}
+
+	template<typename T>
+	void AddSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, T* object, void(T::*pFunc)(float))
+	{
+		Selector* getSelector = FindSelector(SelectorKeyName);
+
+		if (getSelector == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getSelector->AddTickFunc(CallbackTime, object, pFunc);
+	}
+
+	void AddSequenceInTickFunc(const string& SequenceKeyName, float CallbackTime, void(*pFunc)(float))
+	{
+		Sequence* getSequence = FindSequence(SequenceKeyName);
+
+		if (getSequence == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getSequence->AddTickFunc(CallbackTime, pFunc);
+	}
+
+	template<typename T>
+	void AddSequenceInTickFunc(const string& SequenceKeyName, float CallbackTime, T* object, void(T::*pFunc)(float))
+	{
+		Sequence* getSequence = FindSequence(SequenceKeyName);
+
+		if (getSequence == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getSequence->AddTickFunc(CallbackTime, object, pFunc);
+	}
+
+	CGameObject* GetObject() const { return m_RootNode->GetObject(); }
+	void SetObject(CGameObject* Object);
+	string GetRootName() const { return m_RootName; }
+	string GetRootSequenceName() const { return m_RootSequenceName; }
+	string GetRootSelectorName() const { return m_RootSelectorName; }
 
 private:
 	void Init(BT_ROOT_CHILD_TYPE eStyle = BT_SEQUENCE);
@@ -242,11 +326,15 @@ private:
 	bool m_isOnePath;
 	BT_ACTION_TYPE m_Type;
 
+	string m_RootName;
+	string m_RootSequenceName;
+	string m_RootSelectorName;
+
 private:
 	BehaviorTree();
 
 public:
 	~BehaviorTree();
 
-	friend class TreeManager;
+	friend class BTManager;
 };

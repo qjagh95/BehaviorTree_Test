@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "BehaviorTree.h"
-#include "TreeManager.h"
+#include "BTManager.h"
 
 BehaviorTree::BehaviorTree()
 {
@@ -10,11 +10,14 @@ BehaviorTree::BehaviorTree()
 	m_CurAction = NULL;
 	m_isOnePath = false;
 	m_Type = ACTION_NONE;
+	m_RootName = "RootNode";
+	m_RootSequenceName = "RootSequence";
+	m_RootSelectorName = "RootSelector";
 }
 
 BehaviorTree::~BehaviorTree()
 {
-	TreeManager::Get()->Delete(m_TagName);
+	BTManager::Get()->Delete(m_TagName);
 
 	if (m_RootSequence != NULL)
 	{
@@ -38,17 +41,13 @@ BehaviorTree::~BehaviorTree()
 	unordered_map<string, Selector*>::iterator EndIter1 = m_SelectorMap.end();
 
 	for (; StartIter1 != EndIter1; StartIter1++)
-	{
 		delete StartIter1->second;
-	}
 
 	unordered_map<string, Sequence*>::iterator StartIter = m_SequenceMap.begin();
 	unordered_map<string, Sequence*>::iterator EndIter = m_SequenceMap.end();
 
 	for (; StartIter != EndIter; StartIter++)
-	{
 		delete StartIter->second;
-	}
 
 	for (size_t i = 0; i < m_vecAction.size(); i++)
 	{
@@ -85,7 +84,7 @@ void BehaviorTree::AddRootSequenceInSequence(const string& NewSequenceKeyName)
 		assert(false);
 		return;
 	}
-	
+
 	Sequence* newSequence = FindSequence(NewSequenceKeyName);
 
 	if (newSequence == NULL)
@@ -120,7 +119,7 @@ void BehaviorTree::AddRootSequenceInSelector(const string & NewSelectorKeyName)
 
 	if (newSelector != NULL)
 		return;
-	
+
 	newSelector = new Selector();
 	newSelector->SetTag(NewSelectorKeyName);
 	newSelector->SetTreeName(m_TagName);
@@ -333,7 +332,7 @@ void BehaviorTree::AddSequenceInSequence(const string & OldSequenceKey, const st
 {
 	Sequence* getSelector = FindSequence(OldSequenceKey);
 
-	if(getSelector == NULL)
+	if (getSelector == NULL)
 	{
 		assert(false);
 		return;
@@ -415,7 +414,7 @@ void BehaviorTree::AddRootChildSelector()
 	}
 
 	m_RootSelector = new Selector();
-	m_RootSelector->SetTag("RootSelector");
+	m_RootSelector->SetTag(m_RootSelectorName);
 	m_RootSelector->SetTreeName(m_TagName);
 	m_RootSelector->SetActionType(BT_SELECTOR);
 	m_RootSelector->SetKeepActionType(BT_ROOT);
@@ -426,7 +425,7 @@ void BehaviorTree::AddRootChildSelector()
 
 void BehaviorTree::AddRootChildSequence()
 {
-	if(m_RootNode == NULL)
+	if (m_RootNode == NULL)
 	{
 		assert(false);
 		return;
@@ -439,7 +438,7 @@ void BehaviorTree::AddRootChildSequence()
 	}
 
 	m_RootSequence = new Sequence();
-	m_RootSequence->SetTag("RootSequence");
+	m_RootSequence->SetTag(m_RootSequenceName);
 	m_RootSequence->SetTreeName(m_TagName);
 	m_RootSequence->SetActionType(BT_SEQUENCE);
 	m_RootSequence->SetKeepActionType(BT_ROOT);
@@ -448,7 +447,7 @@ void BehaviorTree::AddRootChildSequence()
 	m_RootNode->SetChild(m_RootSequence);
 }
 
-void BehaviorTree::SetAllActionObject(CGameObject * Object)
+void BehaviorTree::SetObject(CGameObject * Object)
 {
 	m_RootNode->SetObject(Object);
 
@@ -462,7 +461,7 @@ void BehaviorTree::SetAllActionObject(CGameObject * Object)
 void BehaviorTree::Init(BT_ROOT_CHILD_TYPE eStyle)
 {
 	m_RootNode = new RootNode();
-	m_RootNode->SetTag("RootNode");
+	m_RootNode->SetTag(m_RootName);
 	m_RootNode->SetKeepActionType(BT_NONE);
 	m_RootNode->SetActionType(BT_ROOT);
 	m_RootNode->SetTreeName(m_TagName);
@@ -506,6 +505,17 @@ void BehaviorTree::CompositNode::SetAllActionObject(CGameObject * Object)
 
 int BehaviorTree::Selector::Update(float DeltaTime)
 {
+	if (m_isCheck == true)
+	{
+		m_TimeVar += DeltaTime;
+
+		if (m_TimeVar >= m_CheckTime)
+		{
+			m_TimeVar = 0.0f;
+			m_TickFunc(DeltaTime);
+		}
+	}
+
 	if (m_vecDecorator.empty() == true)
 		return Process(DeltaTime);
 	else
@@ -514,7 +524,7 @@ int BehaviorTree::Selector::Update(float DeltaTime)
 		for (size_t i = 0; i < m_vecDecorator.size(); i++)
 		{
 			Value = m_vecDecorator[i](DeltaTime);
-			
+
 			if (Value == false)
 				return ACTION_SUCCED;
 		}
@@ -540,7 +550,7 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 			case ACTION_FALSE:
 				break;
 			case ACTION_RUNNING:
-				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
+				BTManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
 				return ACTION_RUNNING;
 				break;
 			}
@@ -564,7 +574,7 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 			return ACTION_FALSE;
 			break;
 		case ACTION_RUNNING:
-			TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[RandomNum];
+			BTManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[RandomNum];
 			return ACTION_RUNNING;
 			break;
 		}
@@ -574,6 +584,17 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 
 int BehaviorTree::Sequence::Update(float DeltaTime)
 {
+	if (m_isCheck == true)
+	{
+		m_TimeVar += DeltaTime;
+
+		if (m_TimeVar >= m_CheckTime)
+		{
+			m_TimeVar = 0.0f;
+			m_TickFunc(DeltaTime);
+		}
+	}
+
 	if (m_vecDecorator.empty() == true)
 	{
 		for (size_t i = 0; i < m_ChildList.size(); i++)
@@ -584,13 +605,13 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 			switch (type)
 			{
 			case ACTION_RUNNING:
-				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
+				BTManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
 				return ACTION_RUNNING;
 				break;
 			case ACTION_FALSE:
 				m_ChildList[i]->Ending(DeltaTime);
-				return ACTION_FALSE;
-				break;
+			return ACTION_FALSE;
+			break;
 			case ACTION_SUCCED:
 				break;
 			}
@@ -601,7 +622,7 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 		bool Value = false;
 		for (size_t i = 0; i < m_vecDecorator.size(); i++)
 		{
-			Value =  m_vecDecorator[i](DeltaTime);
+			Value = m_vecDecorator[i](DeltaTime);
 
 			if (Value == false)
 				return ACTION_FALSE;
@@ -615,18 +636,17 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 			switch (type)
 			{
 			case ACTION_RUNNING:
-				TreeManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
+				BTManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
 				return ACTION_RUNNING;
 				break;
 			case ACTION_FALSE:
 				m_ChildList[i]->Ending(DeltaTime);
-				return ACTION_FALSE;
+			return ACTION_FALSE;
 				break;
 			case ACTION_SUCCED:
 				break;
 			}
 		}
 	}
-
 	return ACTION_SUCCED;
 }

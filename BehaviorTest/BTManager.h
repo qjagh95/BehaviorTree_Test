@@ -1,13 +1,13 @@
 #pragma once
 
 class BehaviorTree;
-class TreeManager
+class BTManager
 {
 public:
-	static TreeManager* Get()
+	static BTManager* Get()
 	{
 		if (m_Instance == NULL)
-			m_Instance = new TreeManager();
+			m_Instance = new BTManager();
 		
 		return m_Instance;
 	}
@@ -28,10 +28,10 @@ public:
 
 private:
 	unordered_map<string, BehaviorTree*> m_TreeMap;
-	static TreeManager* m_Instance;
+	static BTManager* m_Instance;
 
 private:
-	TreeManager();
-	~TreeManager();
+	BTManager();
+	~BTManager();
 };
 
