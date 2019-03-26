@@ -1,5 +1,3 @@
-#pragma once
-
 class CGameObject;
 class BehaviorTree
 {
@@ -16,15 +14,27 @@ public:
 		string GetTag() const { return m_TagName; }
 		string GetTreeName() const { return m_TreeName; }
 		void SetObject(CGameObject* object) { m_pObject = object; }
-		CGameObject* GetObject() const { return m_pObject; }
+		CGameObject* GetTargetObject() const { return m_pObject; }
 		BT_ACTION_TYPE GetType() const { return m_Type; }
 		void SetType(BT_ACTION_TYPE type) { m_Type = type; }
 		void SetKeepAction(Action* action) { m_KeepNode = action; }
 		Action* GetKeepAction() const { return m_KeepNode; }
 
+		void AddDecorator(bool(*pFunc)(float))
+		{
+			m_vecDecorator.push_back(bind(pFunc, placeholders::_1));
+		}
+
+		template<typename T>
+		void AddDecorator(T* object, bool(T::*pFunc)(float))
+		{
+			m_vecDecorator.push_back(bind(pFunc, object, placeholders::_1));
+		}
+
 	protected:
 		Action() { m_KeepNode = NULL; m_pObject = NULL; m_Type = ACTION_NONE; }
 
+		vector<function<bool(float)>> m_vecDecorator;
 		string m_TagName;
 		string m_TreeName;
 		BT_ACTION_TYPE m_Type;
@@ -39,7 +49,6 @@ public:
 	public:
 		void AddChild(Action* Node) { m_ChildList.push_back(Node); }
 		vector<Action*>* GetChildList() { return &m_ChildList; }
-		vector<Action*>* ChildShuffied() { random_shuffle(m_ChildList.begin(), m_ChildList.end()); }
 
 	protected:
 		void SetAllActionObject(CGameObject* Object);
@@ -48,7 +57,7 @@ public:
 		vector<Action*> m_ChildList;
 
 		CompositNode() {}
-		virtual ~CompositNode()	{}
+		virtual ~CompositNode() {}
 	};
 
 	class Selector : public CompositNode
@@ -65,7 +74,7 @@ public:
 		template<typename T>
 		void AddDecorator(T* object, bool(T::*pFunc)(float))
 		{
-			m_vecDecorator.push_back(bind(pFunc,object, placeholders::_1));
+			m_vecDecorator.push_back(bind(pFunc, object, placeholders::_1));
 		}
 
 		void AddTickFunc(float CallbackTime, void(*pFunc)(float))
@@ -78,8 +87,8 @@ public:
 		template<typename T>
 		void AddTickFunc(float CallbackTime, T* object, void(T::*pFunc)(float))
 		{
-			m_isCheck = true;
-			m_CheckTime = CallbackTime;
+			m_isCheck = true
+				m_CheckTime = CallbackTime;
 			m_TickFunc = bind(pFunc, object, placeholders::_1);
 		}
 
@@ -87,7 +96,10 @@ public:
 		void EnableTickFunc() { m_isCheck = true; }
 
 	private:
+		void Render();
 		int Process(float DeltaTime);
+
+	private:
 		Selector() { m_bRandom = false; m_vecDecorator.reserve(4); m_TimeVar = 0.0f; m_CheckTime = 0.0f; m_isCheck = false; }
 		~Selector() {}
 
@@ -138,6 +150,9 @@ public:
 		void EnableTickFunc() { m_isCheck = true; }
 
 	private:
+		void Render();
+
+	private:
 		Sequence() { m_vecDecorator.reserve(4);	m_TimeVar = 0.0f; m_CheckTime = 0.0f; m_isCheck = false; }
 		~Sequence() {}
 
@@ -145,7 +160,7 @@ public:
 		function<void(float)> m_TickFunc;
 		float m_TimeVar;
 		float m_CheckTime;
-		bool m_isCheck; 
+		bool m_isCheck;
 
 	public:
 		friend class BehaviorTree;
@@ -165,8 +180,14 @@ public:
 		{
 			return m_ChildNode->Ending(DeltaTime);
 		}
+
+	private:
+		void Render();
+
 	private:
 		Action* m_ChildNode;
+
+	private:
 		~RootNode() {}
 
 	public:
@@ -178,12 +199,12 @@ public:
 
 	void AddRootSequenceInSequence(const string& NewSequenceKeyName);
 	void AddRootSequenceInSelector(const string& NewSelectorKeyName);
-	void AddRootSequenceInAction(const string& SequenceKeyName, Action* NewAction);
+	void AddRootSequenceInAction(const string& SequenceKeyName, const string& ActionName, Action* NewAction);
 	void AddRootSelectorInSequence(const string& NewSequenceKeyName);
 	void AddRootSelectorInSelector(const string& NewSelectorKeyName);
-	void AddRootSelectorInAction(const string& SelectorKeyName, Action* NewAction);
-	void AddSequenceInAction(const string& SequenceKeyName, Action* NewAction);
-	void AddSelectorInAction(const string& SelectorKeyName, Action* NewAction);
+	void AddRootSelectorInAction(const string& SelectorKeyName, const string& ActionName, Action* NewAction);
+	void AddSequenceInAction(const string& SequenceKeyName, const string& ActionName, Action* NewAction);
+	void AddSelectorInAction(const string& SelectorKeyName, const string& ActionName, Action* NewAction);
 	void AddSequenceInSelector(const string& SequenceKeyName, const string& SelectorKeyName);
 	void AddSequenceInSequence(const string& OldSequenceKey, const string& NewSequenceKey);
 	void AddSelectorInSelector(const string& OldSelectorKey, const string& NewSelector);
@@ -212,7 +233,7 @@ public:
 	{
 		Sequence* getSquence = FindSequence(SequenceKeyName);
 
-		if (getSquence == NULL)
+		if (getSquence == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -239,7 +260,7 @@ public:
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
-		if (getSelector == NULL)
+		if (getSelector == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -266,13 +287,40 @@ public:
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
-		if (getSelector == NULL)
+		if (getSelector == NULLPTR)
 		{
 			assert(false);
 			false;
 		}
 
 		getSelector->AddTickFunc(CallbackTime, object, pFunc);
+	}
+
+	void AddActionInDecorator(const string& ActionName, bool(*pFunc)(float))
+	{
+		Action* getAction = FindAction(ActionName);
+
+		if (getAction == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getAction->AddDecorator(pFunc);
+	}
+
+	template<typename T>
+	void AddActionInDecorator(const string& ActionName, T* object, bool(T::*pFunc)(float))
+	{
+		Action* getAction = FindAction(ActionName);
+
+		if (getAction == NULL)
+		{
+			assert(false);
+			false;
+		}
+
+		getAction->AddDecorator(object, pFunc);
 	}
 
 	void SetSequenceInTickFunc(const string& SequenceKeyName, float CallbackTime, void(*pFunc)(float))
@@ -302,7 +350,7 @@ public:
 		getSequence->AddTickFunc(CallbackTime, object, pFunc);
 	}
 
-	CGameObject* GetObject() const { return m_RootNode->GetObject(); }
+	CGameObject* GetTargetObject() const { return m_RootNode->GetTargetObject(); }
 	void SetObject(CGameObject* Object);
 	string GetRootName() const { return m_RootName; }
 	string GetRootSequenceName() const { return m_RootSequenceName; }
@@ -316,6 +364,7 @@ private:
 
 	Sequence* FindSequence(const string& KeyName);
 	Selector* FindSelector(const string& KeyName);
+	Action* FindAction(const string& KeyName);
 
 	void AddRootChildSelector();
 	void AddRootChildSequence();
@@ -327,7 +376,7 @@ private:
 
 	unordered_map<string, Sequence*> m_SequenceMap;
 	unordered_map<string, Selector*> m_SelectorMap;
-	vector<Action*> m_vecAction;
+	unordered_map<string, Action*> m_ActionMap;
 
 	Action* m_CurAction;
 	string m_TagName;

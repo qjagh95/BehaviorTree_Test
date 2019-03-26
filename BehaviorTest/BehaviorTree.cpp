@@ -51,11 +51,12 @@ BehaviorTree::~BehaviorTree()
 	for (; StartIter != EndIter; StartIter++)
 		delete StartIter->second;
 
-	for (size_t i = 0; i < m_vecAction.size(); i++)
-	{
-		delete m_vecAction[i];
-		m_vecAction[i] = NULL;
-	}
+
+	unordered_map<string, Action*>::iterator StartIter2 = m_ActionMap.begin();
+	unordered_map<string, Action*>::iterator EndIter2 = m_ActionMap.end();
+
+	for (; StartIter2 != EndIter2; StartIter2++)
+		delete StartIter2->second;
 }
 
 void BehaviorTree::Update(float DeltaTime)
@@ -132,7 +133,7 @@ void BehaviorTree::AddRootSequenceInSelector(const string & NewSelectorKeyName)
 
 }
 
-void BehaviorTree::AddRootSequenceInAction(const string& SequenceKeyName, Action* NewAction)
+void BehaviorTree::AddRootSequenceInAction(const string& SequenceKeyName, const string& ActionName, Action* NewAction)
 {
 	if (m_RootSequence == NULL)
 	{
@@ -152,7 +153,8 @@ void BehaviorTree::AddRootSequenceInAction(const string& SequenceKeyName, Action
 	NewAction->SetKeepAction(m_RootSequence);
 
 	m_RootSequence->AddChild(NewAction);
-	m_vecAction.push_back(NewAction);
+	m_ActionMap.insert(make_pair(ActionName, NewAction));
+
 	m_Count++;
 }
 
@@ -206,7 +208,7 @@ void BehaviorTree::AddRootSelectorInSelector(const string & NewSelectorKeyName)
 	m_Count++;
 }
 
-void BehaviorTree::AddRootSelectorInAction(const string & SelectorKeyName, Action * NewAction)
+void BehaviorTree::AddRootSelectorInAction(const string & SelectorKeyName, const string& ActionName, Action * NewAction)
 {
 	if (m_RootNode == NULL)
 	{
@@ -221,16 +223,16 @@ void BehaviorTree::AddRootSelectorInAction(const string & SelectorKeyName, Actio
 	}
 
 	NewAction->Init();
-	NewAction->SetTag(SelectorKeyName);
+	NewAction->SetTag(ActionName);
 	NewAction->SetTreeName(m_TagName);
 	NewAction->SetKeepAction(m_RootSelector);
 
 	m_RootSelector->AddChild(NewAction);
-	m_vecAction.push_back(NewAction);
+	m_ActionMap.insert(make_pair(ActionName, NewAction));
 	m_Count++;
 }
 
-void BehaviorTree::AddSequenceInAction(const string & SequenceKeyName, Action* NewAction)
+void BehaviorTree::AddSequenceInAction(const string & SequenceKeyName, const string& ActionName, Action* NewAction)
 {
 	Sequence* getSequence = FindSequence(SequenceKeyName);
 
@@ -241,16 +243,16 @@ void BehaviorTree::AddSequenceInAction(const string & SequenceKeyName, Action* N
 	}
 
 	NewAction->Init();
-	NewAction->SetTag(SequenceKeyName);
+	NewAction->SetTag(ActionName);
 	NewAction->SetTreeName(m_TagName);
 	NewAction->SetKeepAction(getSequence);
 
 	getSequence->AddChild(NewAction);
-	m_vecAction.push_back(NewAction);
+	m_ActionMap.insert(make_pair(ActionName, NewAction));
 	m_Count++;
 }
 
-void BehaviorTree::AddSelectorInAction(const string & SelectorKeyName, Action * NewAction)
+void BehaviorTree::AddSelectorInAction(const string & SelectorKeyName, const string& ActionName, Action * NewAction)
 {
 	Selector* getSelector = FindSelector(SelectorKeyName);
 
@@ -261,12 +263,12 @@ void BehaviorTree::AddSelectorInAction(const string & SelectorKeyName, Action * 
 	}
 
 	NewAction->Init();
-	NewAction->SetTag(SelectorKeyName);
+	NewAction->SetTag(ActionName);
 	NewAction->SetTreeName(m_TagName);
 	NewAction->SetKeepAction(getSelector);
 
 	getSelector->AddChild(NewAction);
-	m_vecAction.push_back(NewAction);
+	m_ActionMap.insert(make_pair(ActionName, NewAction));
 	m_Count++;
 }
 
@@ -546,6 +548,16 @@ BehaviorTree::Selector * BehaviorTree::FindSelector(const string & KeyName)
 	if (FindIter == m_SelectorMap.end())
 		return NULL;
 
+	return FindIter->second;
+}
+
+BehaviorTree::Action * BehaviorTree::FindAction(const string & KeyName)
+{
+	auto FindIter = m_ActionMap.find(KeyName);
+
+	if (FindIter == m_ActionMap.end())
+		return NULL;
+	
 	return FindIter->second;
 }
 
