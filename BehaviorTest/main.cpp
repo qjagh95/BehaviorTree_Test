@@ -24,8 +24,13 @@ public:
 class Action1 : public BehaviorTree::Action
 {
 public:
-	Action1() { }
+	Action1() {}
 	~Action1() {}
+
+	void Init() override
+	{
+		cout << "Action1 Start" << endl;
+	}
 
 	int Update(float DeltaTime) override
 	{
@@ -95,6 +100,8 @@ int main()
 	
 	myState->AddRootSequenceInAction("MyHome", myHome);
 	myState->AddRootSequenceInAction("sitDown", sitDown);
+
+	int a = myState->GetCount();
 
 	//게임루프 가정
 	while (true)

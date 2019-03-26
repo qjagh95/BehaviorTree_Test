@@ -18,6 +18,7 @@ public:
 	}
 
 	void Delete(const string& BTName);
+	void Render(const string& BTName);
 
 public:
 	BehaviorTree* CreateBehaviorTree(const string& KeyName, BT_ROOT_CHILD_TYPE eStyle = BT_SELECTOR);

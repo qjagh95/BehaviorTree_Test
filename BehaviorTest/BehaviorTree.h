@@ -7,6 +7,7 @@ public:
 	class Action
 	{
 	public:
+		virtual void Init() {};
 		virtual int Update(float DeltaTime) = 0;
 		virtual void Ending(float DeltaTime) {};
 
@@ -77,7 +78,7 @@ public:
 		template<typename T>
 		void AddTickFunc(float CallbackTime, T* object, void(T::*pFunc)(float))
 		{
-			m_isCheck = true
+			m_isCheck = true;
 			m_CheckTime = CallbackTime;
 			m_TickFunc = bind(pFunc, object, placeholders::_1);
 		}
@@ -307,8 +308,11 @@ public:
 	string GetRootSequenceName() const { return m_RootSequenceName; }
 	string GetRootSelectorName() const { return m_RootSelectorName; }
 
+	int GetCount() const { return m_Count; }
+
 private:
 	void Init(BT_ROOT_CHILD_TYPE eStyle = BT_SEQUENCE);
+	void GUIRender();
 
 	Sequence* FindSequence(const string& KeyName);
 	Selector* FindSelector(const string& KeyName);
@@ -333,6 +337,8 @@ private:
 	string m_RootName;
 	string m_RootSequenceName;
 	string m_RootSelectorName;
+
+	int m_Count;
 
 private:
 	BehaviorTree();

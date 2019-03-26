@@ -13,6 +13,8 @@ BehaviorTree::BehaviorTree()
 	m_RootName = "RootNode";
 	m_RootSequenceName = "RootSequence";
 	m_RootSelectorName = "RootSelector";
+
+	m_Count = 2;
 }
 
 BehaviorTree::~BehaviorTree()
@@ -96,6 +98,7 @@ void BehaviorTree::AddRootSequenceInSequence(const string& NewSequenceKeyName)
 
 		m_RootSequence->AddChild(newSequence);
 		m_SequenceMap.insert(make_pair(NewSequenceKeyName, newSequence));
+		m_Count++;
 	}
 }
 
@@ -125,6 +128,8 @@ void BehaviorTree::AddRootSequenceInSelector(const string & NewSelectorKeyName)
 
 	m_RootSequence->AddChild(newSelector);
 	m_SelectorMap.insert(make_pair(NewSelectorKeyName, newSelector));
+	m_Count++;
+
 }
 
 void BehaviorTree::AddRootSequenceInAction(const string& SequenceKeyName, Action* NewAction)
@@ -141,12 +146,14 @@ void BehaviorTree::AddRootSequenceInAction(const string& SequenceKeyName, Action
 		return;
 	}
 
+	NewAction->Init();
 	NewAction->SetTag(SequenceKeyName);
 	NewAction->SetTreeName(m_TagName);
 	NewAction->SetKeepAction(m_RootSequence);
 
 	m_RootSequence->AddChild(NewAction);
 	m_vecAction.push_back(NewAction);
+	m_Count++;
 }
 
 void BehaviorTree::AddRootSelectorInSequence(const string & NewSequenceKeyName)
@@ -164,12 +171,14 @@ void BehaviorTree::AddRootSelectorInSequence(const string & NewSequenceKeyName)
 	}
 
 	Sequence* newSequence = new Sequence();
+	newSequence->Init();
 	newSequence->SetTag(NewSequenceKeyName);
 	newSequence->SetTreeName(m_TagName);
 	newSequence->SetKeepAction(m_RootSelector);
 
 	m_RootSelector->AddChild(newSequence);
 	m_SequenceMap.insert(make_pair(NewSequenceKeyName, newSequence));
+	m_Count++;
 }
 
 void BehaviorTree::AddRootSelectorInSelector(const string & NewSelectorKeyName)
@@ -187,12 +196,14 @@ void BehaviorTree::AddRootSelectorInSelector(const string & NewSelectorKeyName)
 	}
 
 	Selector* newSelector = new Selector();
+	newSelector->Init();
 	newSelector->SetTag(NewSelectorKeyName);
 	newSelector->SetTreeName(m_TagName);
 	newSelector->SetKeepAction(m_RootSelector);
 
 	m_RootSelector->AddChild(newSelector);
 	m_SelectorMap.insert(make_pair(NewSelectorKeyName, newSelector));
+	m_Count++;
 }
 
 void BehaviorTree::AddRootSelectorInAction(const string & SelectorKeyName, Action * NewAction)
@@ -209,12 +220,14 @@ void BehaviorTree::AddRootSelectorInAction(const string & SelectorKeyName, Actio
 		return;
 	}
 
-	m_RootSelector->AddChild(NewAction);
+	NewAction->Init();
 	NewAction->SetTag(SelectorKeyName);
 	NewAction->SetTreeName(m_TagName);
 	NewAction->SetKeepAction(m_RootSelector);
 
+	m_RootSelector->AddChild(NewAction);
 	m_vecAction.push_back(NewAction);
+	m_Count++;
 }
 
 void BehaviorTree::AddSequenceInAction(const string & SequenceKeyName, Action* NewAction)
@@ -227,12 +240,14 @@ void BehaviorTree::AddSequenceInAction(const string & SequenceKeyName, Action* N
 		return;
 	}
 
-	getSequence->AddChild(NewAction);
+	NewAction->Init();
 	NewAction->SetTag(SequenceKeyName);
 	NewAction->SetTreeName(m_TagName);
 	NewAction->SetKeepAction(getSequence);
 
+	getSequence->AddChild(NewAction);
 	m_vecAction.push_back(NewAction);
+	m_Count++;
 }
 
 void BehaviorTree::AddSelectorInAction(const string & SelectorKeyName, Action * NewAction)
@@ -245,13 +260,14 @@ void BehaviorTree::AddSelectorInAction(const string & SelectorKeyName, Action * 
 		return;
 	}
 
-	getSelector->AddChild(NewAction);
-
+	NewAction->Init();
 	NewAction->SetTag(SelectorKeyName);
 	NewAction->SetTreeName(m_TagName);
 	NewAction->SetKeepAction(getSelector);
 
+	getSelector->AddChild(NewAction);
 	m_vecAction.push_back(NewAction);
+	m_Count++;
 }
 
 void BehaviorTree::AddSequenceInSelector(const string & SequenceKeyName, const string & SelectorKeyName)
@@ -273,12 +289,14 @@ void BehaviorTree::AddSequenceInSelector(const string & SequenceKeyName, const s
 	}
 
 	newSelector = new Selector();
+	newSelector->Init();
 	newSelector->SetTag(SelectorKeyName);
 	newSelector->SetTreeName(m_TagName);
 	newSelector->SetKeepAction(getSequence);
 
 	getSequence->AddChild(newSelector);
 	m_SelectorMap.insert(make_pair(SelectorKeyName, newSelector));
+	m_Count++;
 }
 
 void BehaviorTree::AddSelectorInSequence(const string & SelectorKeyName, const string & SequenceKeyName)
@@ -300,12 +318,14 @@ void BehaviorTree::AddSelectorInSequence(const string & SelectorKeyName, const s
 	}
 
 	newSequence = new Sequence();
+	newSequence->Init();
 	newSequence->SetTag(SequenceKeyName);
 	newSequence->SetTreeName(m_TagName);
 	newSequence->SetKeepAction(getSelector);
 
 	getSelector->AddChild(newSequence);
 	m_SequenceMap.insert(make_pair(SequenceKeyName, newSequence));
+	m_Count++;
 }
 
 void BehaviorTree::AddSequenceInSequence(const string & OldSequenceKey, const string & NewSequenceKey)
@@ -327,12 +347,14 @@ void BehaviorTree::AddSequenceInSequence(const string & OldSequenceKey, const st
 	}
 
 	newSequence = new Sequence();
+	newSequence->Init();
 	newSequence->SetTag(NewSequenceKey);
 	newSequence->SetTreeName(m_TagName);
 	newSequence->SetKeepAction(getSelector);
 
 	getSelector->AddChild(newSequence);
 	m_SequenceMap.insert(make_pair(NewSequenceKey, newSequence));
+	m_Count++;
 }
 
 void BehaviorTree::SetSelectorRandomProcess(const string & SelectorKeyName, bool Value)
@@ -419,12 +441,14 @@ void BehaviorTree::AddSelectorInSelector(const string & OldSelectorKey, const st
 	}
 
 	newSelector = new Selector();
+	newSelector->Init();
 	newSelector->SetTag(NewSelector);
 	newSelector->SetTreeName(m_TagName);
 	newSelector->SetKeepAction(getSelector);
 
 	getSelector->AddChild(newSelector);
 	m_SelectorMap.insert(make_pair(NewSelector, newSelector));
+	m_Count++;
 }
 
 void BehaviorTree::AddRootChildSelector()
@@ -497,6 +521,12 @@ void BehaviorTree::Init(BT_ROOT_CHILD_TYPE eStyle)
 		AddRootChildSequence();
 		break;
 	}
+}
+
+void BehaviorTree::GUIRender()
+{
+	/*
+	*/
 }
 
 BehaviorTree::Sequence * BehaviorTree::FindSequence(const string & KeyName)

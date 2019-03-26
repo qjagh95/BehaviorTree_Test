@@ -22,6 +22,10 @@ void BTManager::Delete(const string & BTName)
 	m_TreeMap.erase(BTName);
 }
 
+void BTManager::Render(const string & BTName)
+{
+}
+
 BehaviorTree* BTManager::CreateBehaviorTree(const string& KeyName, BT_ROOT_CHILD_TYPE eStyle)
 {
 	BehaviorTree* newTree = new BehaviorTree();
