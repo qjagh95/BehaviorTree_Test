@@ -19,6 +19,7 @@ public:
 		void SetType(BT_ACTION_TYPE type) { m_Type = type; }
 		void SetKeepAction(Action* action) { m_KeepNode = action; }
 		Action* GetKeepAction() const { return m_KeepNode; }
+		vector<function<bool(float)>>* GetDecoratorVec() { return &m_vecDecorator; }
 
 		void AddDecorator(bool(*pFunc)(float))
 		{
@@ -87,8 +88,8 @@ public:
 		template<typename T>
 		void AddTickFunc(float CallbackTime, T* object, void(T::*pFunc)(float))
 		{
-			m_isCheck = true
-				m_CheckTime = CallbackTime;
+			m_isCheck = true;
+			m_CheckTime = CallbackTime;
 			m_TickFunc = bind(pFunc, object, placeholders::_1);
 		}
 
@@ -233,7 +234,7 @@ public:
 	{
 		Sequence* getSquence = FindSequence(SequenceKeyName);
 
-		if (getSquence == NULLPTR)
+		if (getSquence == NULL)
 		{
 			assert(false);
 			false;
@@ -260,7 +261,7 @@ public:
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
-		if (getSelector == NULLPTR)
+		if (getSelector == NULL)
 		{
 			assert(false);
 			false;
@@ -287,7 +288,7 @@ public:
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
-		if (getSelector == NULLPTR)
+		if (getSelector == NULL)
 		{
 			assert(false);
 			false;

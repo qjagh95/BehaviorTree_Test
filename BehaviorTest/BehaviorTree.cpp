@@ -567,6 +567,7 @@ void BehaviorTree::CompositNode::SetAllActionObject(CGameObject * Object)
 		m_ChildList[i]->SetObject(Object);
 }
 
+
 int BehaviorTree::Selector::Update(float DeltaTime)
 {
 	if (m_isCheck == true)
@@ -602,6 +603,18 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 	{
 		for (size_t i = 0; i < m_ChildList.size(); i++)
 		{
+			if (m_ChildList[i]->GetDecoratorVec()->empty() == false)
+			{
+				bool Temp = true;
+				for (size_t i = 0; i < m_ChildList[i]->GetDecoratorVec()->size(); i++)
+				{
+					Temp = m_ChildList[i]->GetDecoratorVec()->at(i)(DeltaTime);
+
+					if (Temp == false)
+						return ACTION_FALSE;
+				}
+			}
+
 			BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildList[i]->Update(DeltaTime);
 			m_ChildList[i]->SetType(type);
 
@@ -624,6 +637,18 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 	else
 	{
 		int RandomNum = rand() % m_ChildList.size();
+
+		if (m_ChildList[RandomNum]->GetDecoratorVec()->empty() == false)
+		{
+			bool Temp = true;
+			for (size_t i = 0; i < m_ChildList[RandomNum]->GetDecoratorVec()->size(); i++)
+			{
+				Temp = m_ChildList[RandomNum]->GetDecoratorVec()->at(i)(DeltaTime);
+
+				if (Temp == false)
+					return ACTION_FALSE;
+			}
+		}
 
 		BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildList[RandomNum]->Update(DeltaTime);
 		m_ChildList[RandomNum]->SetType(type);
@@ -663,6 +688,18 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 	{
 		for (size_t i = 0; i < m_ChildList.size(); i++)
 		{
+			if (m_ChildList[i]->GetDecoratorVec()->empty() == false)
+			{
+				bool Temp = true;
+				for (size_t i = 0; i < m_ChildList[i]->GetDecoratorVec()->size(); i++)
+				{
+					Temp = m_ChildList[i]->GetDecoratorVec()->at(i)(DeltaTime);
+
+					if (Temp == false)
+						return ACTION_SUCCED;
+				}
+			}
+
 			BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildList[i]->Update(DeltaTime);
 			m_ChildList[i]->SetType(type);
 
@@ -674,8 +711,8 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 				break;
 			case ACTION_FALSE:
 				m_ChildList[i]->Ending(DeltaTime);
-			return ACTION_FALSE;
-			break;
+				return ACTION_FALSE;
+				break;
 			case ACTION_SUCCED:
 				break;
 			}
@@ -683,17 +720,29 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 	}
 	else
 	{
-		bool Value = false;
+		bool Value = true;
 		for (size_t i = 0; i < m_vecDecorator.size(); i++)
 		{
 			Value = m_vecDecorator[i](DeltaTime);
 
 			if (Value == false)
-				return ACTION_FALSE;
+				return ACTION_SUCCED;
 		}
 
 		for (size_t i = 0; i < m_ChildList.size(); i++)
 		{
+			if (m_ChildList[i]->GetDecoratorVec()->empty() == false)
+			{
+				bool Temp = true;
+				for (size_t i = 0; i < m_ChildList[i]->GetDecoratorVec()->size(); i++)
+				{
+					Temp = m_ChildList[i]->GetDecoratorVec()->at(i)(DeltaTime);
+
+					if (Temp == false)
+						return ACTION_SUCCED;
+				}
+			}
+
 			BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildList[i]->Update(DeltaTime);
 			m_ChildList[i]->SetType(type);
 
@@ -705,7 +754,7 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 				break;
 			case ACTION_FALSE:
 				m_ChildList[i]->Ending(DeltaTime);
-			return ACTION_FALSE;
+				return ACTION_FALSE;
 				break;
 			case ACTION_SUCCED:
 				break;

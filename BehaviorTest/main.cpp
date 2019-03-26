@@ -95,11 +95,11 @@ int main()
 	BehaviorTree* myState = BTManager::Get()->CreateBehaviorTree("PlayerState", BT_SEQUENCE);
 
 	myState->AddRootSequenceInSelector("RandomSelector");
-	myState->AddSelectorInAction("RandomSelector", ranAction1);
-	myState->AddSelectorInAction("RandomSelector", ranAction2);
+	myState->AddSelectorInAction("RandomSelector", "Action1", ranAction1);
+	myState->AddSelectorInAction("RandomSelector", "Action2", ranAction2);
 	
-	myState->AddRootSequenceInAction("MyHome", myHome);
-	myState->AddRootSequenceInAction("sitDown", sitDown);
+	myState->AddRootSequenceInAction("MyHome", "Action3", myHome);
+	myState->AddRootSequenceInAction("sitDown", "Action3", sitDown);
 
 	int a = myState->GetCount();
 
