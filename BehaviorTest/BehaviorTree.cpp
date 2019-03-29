@@ -7,7 +7,6 @@ BehaviorTree::BehaviorTree()
 	m_RootNode = NULLPTR;
 	m_RootSequence = NULLPTR;
 	m_RootSelector = NULLPTR;
-	m_CurAction = NULLPTR;
 	m_Object = NULLPTR;
 	m_isOnePath = false;
 	m_Type = ACTION_NONE;
@@ -62,83 +61,21 @@ BehaviorTree::~BehaviorTree()
 
 void BehaviorTree::Update(float DeltaTime)
 {
-	switch (m_Type)
-	{
-	case ACTION_RUNNING:
-	{
-		for (size_t i = 0; i < m_CurAction->GetDecoratorVec()->size(); i++)
-		{
-			if (m_CurAction->GetDecoratorVec()->at(i)(DeltaTime) == false)
-			{
-				m_Type = (BT_ACTION_TYPE)m_RootNode->Update(DeltaTime);
-				return;
-			}
-		}
-
-		Action* getPatent = m_CurAction->GetKeepAction();
-		BT_ROOT_CHILD_TYPE getParentType = getPatent->GetKeepActionType();
-
-		switch (getParentType)
-		{
-		case BT_SELECTOR:
-		{
-			size_t size = ((Selector*)getPatent)->GetDecoratorVec()->size();
-
-			for (size_t i = 0; i < size; i++)
-			{
-				bool Value = true;
-				Value = ((Selector*)getPatent)->GetDecoratorVec()->at(i)(DeltaTime);
-
-				if (Value == false)
-				{
-					m_Type = (BT_ACTION_TYPE)m_RootNode->Update(DeltaTime);
-					return;
-				}
-			}
-
-		}
-		case BT_SEQUENCE:
-		{
-			size_t size = ((Sequence*)getPatent)->GetDecoratorVec()->size();
-
-			for (size_t i = 0; i < size; i++)
-			{
-				bool Value = true;
-				Value = ((Sequence*)getPatent)->GetDecoratorVec()->at(i)(DeltaTime);
-
-				if (Value == false)
-				{
-					m_Type = (BT_ACTION_TYPE)m_RootNode->Update(DeltaTime);
-					return;
-				}
-			}
-		}
-		break;
-		}
-
-		m_Type = (BT_ACTION_TYPE)m_CurAction->Update(DeltaTime);
-	}
-	break;
-	case ACTION_NONE:
-	case ACTION_SUCCED:
-	case ACTION_FALSE:
-		m_Type = (BT_ACTION_TYPE)m_RootNode->Update(DeltaTime);
-		break;
-	}
+	m_Type = (BT_ACTION_TYPE)m_RootNode->Update(DeltaTime);
 }
 
-void BehaviorTree::AddRootSequenceInSequence(const string& NewSequenceKeyName)
+BehaviorTree::Sequence* BehaviorTree::AddRootSequenceInSequence(const string& NewSequenceKeyName)
 {
 	if (m_RootSequence == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	if (m_RootNode == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	Sequence* newSequence = FindSequence(NewSequenceKeyName);
@@ -146,7 +83,7 @@ void BehaviorTree::AddRootSequenceInSequence(const string& NewSequenceKeyName)
 	if (newSequence != NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	newSequence = new Sequence();
@@ -162,26 +99,28 @@ void BehaviorTree::AddRootSequenceInSequence(const string& NewSequenceKeyName)
 	m_SequenceMap.insert(make_pair(NewSequenceKeyName, newSequence));
 
 	m_Count++;
+
+	return newSequence;
 }
 
-void BehaviorTree::AddRootSequenceInSelector(const string & NewSelectorKeyName)
+BehaviorTree::Selector* BehaviorTree::AddRootSequenceInSelector(const string & NewSelectorKeyName)
 {
 	if (m_RootSequence == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	if (m_RootNode == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	Selector* newSelector = FindSelector(NewSelectorKeyName);
 
 	if (newSelector != NULLPTR)
-		return;
+		return NULLPTR;
 
 	newSelector = new Selector();
 	newSelector->SetObject(m_Object);
@@ -196,20 +135,22 @@ void BehaviorTree::AddRootSequenceInSelector(const string & NewSelectorKeyName)
 	m_SelectorMap.insert(make_pair(NewSelectorKeyName, newSelector));
 
 	m_Count++;
+
+	return newSelector;
 }
 
-void BehaviorTree::AddRootSelectorInSequence(const string & NewSequenceKeyName)
+BehaviorTree::Sequence* BehaviorTree::AddRootSelectorInSequence(const string & NewSequenceKeyName)
 {
 	if (m_RootNode == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	if (m_RootSelector == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	Sequence* newSequence = new Sequence();
@@ -223,20 +164,22 @@ void BehaviorTree::AddRootSelectorInSequence(const string & NewSequenceKeyName)
 
 	m_RootSelector->AddChild(newSequence);
 	m_SequenceMap.insert(make_pair(NewSequenceKeyName, newSequence));
+
+	return newSequence;
 }
 
-void BehaviorTree::AddRootSelectorInSelector(const string & NewSelectorKeyName)
+BehaviorTree::Selector* BehaviorTree::AddRootSelectorInSelector(const string & NewSelectorKeyName)
 {
 	if (m_RootNode == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	if (m_RootSelector == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	Selector* newSelector = new Selector();
@@ -252,16 +195,18 @@ void BehaviorTree::AddRootSelectorInSelector(const string & NewSelectorKeyName)
 	m_SelectorMap.insert(make_pair(NewSelectorKeyName, newSelector));
 
 	m_Count++;
+
+	return newSelector;
 }
 
-void BehaviorTree::AddSequenceInSelector(const string & SequenceKeyName, const string & SelectorKeyName)
+BehaviorTree::Selector* BehaviorTree::AddSequenceInSelector(const string & SequenceKeyName, const string & SelectorKeyName)
 {
 	Sequence* getSequence = FindSequence(SequenceKeyName);
 
 	if (getSequence == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	Selector* newSelector = FindSelector(SelectorKeyName);
@@ -269,7 +214,7 @@ void BehaviorTree::AddSequenceInSelector(const string & SequenceKeyName, const s
 	if (newSelector != NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	newSelector = new Selector();
@@ -284,16 +229,18 @@ void BehaviorTree::AddSequenceInSelector(const string & SequenceKeyName, const s
 	getSequence->AddChild(newSelector);
 	m_SelectorMap.insert(make_pair(SelectorKeyName, newSelector));
 	m_Count++;
+
+	return newSelector;
 }
 
-void BehaviorTree::AddSelectorInSequence(const string & SelectorKeyName, const string & SequenceKeyName)
+BehaviorTree::Sequence* BehaviorTree::AddSelectorInSequence(const string & SelectorKeyName, const string & SequenceKeyName)
 {
 	Selector* getSelector = FindSelector(SelectorKeyName);
 
 	if (getSelector == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	Sequence* newSequence = FindSequence(SequenceKeyName);
@@ -301,7 +248,7 @@ void BehaviorTree::AddSelectorInSequence(const string & SelectorKeyName, const s
 	if (newSequence != NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	newSequence = new Sequence();
@@ -316,16 +263,18 @@ void BehaviorTree::AddSelectorInSequence(const string & SelectorKeyName, const s
 	getSelector->AddChild(newSequence);
 	m_SequenceMap.insert(make_pair(SequenceKeyName, newSequence));
 	m_Count++;
+
+	return newSequence;
 }
 
-void BehaviorTree::AddSequenceInSequence(const string & OldSequenceKey, const string & NewSequenceKey)
+BehaviorTree::Sequence* BehaviorTree::AddSequenceInSequence(const string & OldSequenceKey, const string & NewSequenceKey)
 {
 	Sequence* getSelector = FindSequence(OldSequenceKey);
 
 	if (getSelector == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	Sequence* newSequence = FindSequence(NewSequenceKey);
@@ -333,7 +282,7 @@ void BehaviorTree::AddSequenceInSequence(const string & OldSequenceKey, const st
 	if (newSequence != NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	newSequence = new Sequence();
@@ -348,6 +297,8 @@ void BehaviorTree::AddSequenceInSequence(const string & OldSequenceKey, const st
 	getSelector->AddChild(newSequence);
 	m_SequenceMap.insert(make_pair(NewSequenceKey, newSequence));
 	m_Count++;
+
+	return newSequence;
 }
 
 void BehaviorTree::SetSelectorRandomProcess(const string & SelectorKeyName, bool Value)
@@ -415,14 +366,14 @@ void BehaviorTree::SelectorTickFuncEnable(const string & SelectorKeyName)
 	getSelector->EnableTickFunc();
 }
 
-void BehaviorTree::AddSelectorInSelector(const string & OldSelectorKey, const string & NewSelector)
+BehaviorTree::Selector* BehaviorTree::AddSelectorInSelector(const string & OldSelectorKey, const string & NewSelector)
 {
 	Selector* getSelector = FindSelector(OldSelectorKey);
 
 	if (getSelector == NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	Selector* newSelector = FindSelector(NewSelector);
@@ -430,7 +381,7 @@ void BehaviorTree::AddSelectorInSelector(const string & OldSelectorKey, const st
 	if (newSelector != NULLPTR)
 	{
 		assert(false);
-		return;
+		return NULLPTR;
 	}
 
 	newSelector = new Selector();
@@ -445,6 +396,8 @@ void BehaviorTree::AddSelectorInSelector(const string & OldSelectorKey, const st
 	getSelector->AddChild(newSelector);
 	m_SelectorMap.insert(make_pair(NewSelector, newSelector));
 	m_Count++;
+
+	return newSelector;
 }
 
 void BehaviorTree::AddRootChildSelector()
@@ -588,7 +541,7 @@ int BehaviorTree::Selector::Update(float DeltaTime)
 			Value = m_vecDecorator[i](DeltaTime);
 
 			if (Value == false)
-				return ACTION_SUCCED;
+				return ACTION_FALSE;
 		}
 		return Process(DeltaTime);
 	}
@@ -624,7 +577,6 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 			case ACTION_FALSE:
 				break;
 			case ACTION_RUNNING:
-				BTManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
 				return ACTION_RUNNING;
 				break;
 			}
@@ -660,7 +612,6 @@ int BehaviorTree::Selector::Process(float DeltaTime)
 			return ACTION_FALSE;
 			break;
 		case ACTION_RUNNING:
-			BTManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[RandomNum];
 			return ACTION_RUNNING;
 			break;
 		}
@@ -703,7 +654,6 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 			switch (type)
 			{
 			case ACTION_RUNNING:
-				BTManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
 				return ACTION_RUNNING;
 				break;
 			case ACTION_FALSE:
@@ -746,7 +696,6 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 			switch (type)
 			{
 			case ACTION_RUNNING:
-				BTManager::Get()->FindTree(m_TreeName)->m_CurAction = m_ChildList[i];
 				return ACTION_RUNNING;
 				break;
 			case ACTION_FALSE:

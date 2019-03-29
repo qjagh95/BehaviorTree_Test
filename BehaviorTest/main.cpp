@@ -27,6 +27,22 @@ public:
 	Action1() {}
 	~Action1() {}
 
+	bool Check1(float DeltaTime)
+	{
+		cout << "Selector1 체크" << endl;
+		return true;
+	}
+	bool Check2(float DeltaTime)
+	{
+		cout << "Selector2 체크" << endl;
+		return true;
+	}
+	bool Check3(float DeltaTime)
+	{
+		cout << "Selector3 체크" << endl;
+		return true;
+	}
+
 	void Init() override
 	{
 		cout << "Action1 Start" << endl;
@@ -46,7 +62,7 @@ public:
 class Action2 : public BehaviorTree::Action
 {
 public:
-	Action2() { }
+	Action2() {}
 	~Action2() {}
 
 	int Update(float DeltaTime) override
@@ -87,18 +103,25 @@ int main()
 	srand(time(NULL));
 
 	//ChairUp* chairUp = new ChairUp();
-	Action1* ranAction1 = new Action1();
-	Action2* ranAction2 = new Action2();
-	MyHome* myHome = new MyHome();
-	SitDown* sitDown = new SitDown();
+	Action1* ranAction1;
+	Action2* ranAction2;
 
-	BehaviorTree* myState = BTManager::Get()->CreateBehaviorTree("PlayerState", BT_SEQUENCE);
-	myState->AddRootSequenceInSelector("RandomSelector");
-	myState->AddSelectorInAction<Action1>("RandomSelector", "Action1");
-	myState->AddSelectorInAction<Action2>("RandomSelector", "Action2");
-	
-	myState->AddRootSequenceInAction<MyHome>("Action3");
-	myState->AddRootSequenceInAction<SitDown>("Action3");
+	BehaviorTree* myState = BTManager::Get()->CreateBehaviorTree("PlayerState", BT_SELECTOR);
+	myState->AddRootSelectorInSelector("Selector1");
+	//ranAction2 = myState->AddSelectorInAction<Action2>("Selector1", "Action2");
+
+	myState->AddSelectorInSelector("Selector1", "Selector2");
+	myState->AddSelectorInSelector("Selector2", "Selector3");
+
+	ranAction1 = myState->AddSelectorInAction<Action1>("Selector1", "Action1");
+	ranAction2 = myState->AddSelectorInAction<Action2>("Selector2", "Action2");
+
+	myState->AddSelectorInDecorator("Selector1", ranAction1, &Action1::Check1);
+	myState->AddSelectorInDecorator("Selector2", ranAction1, &Action1::Check2);
+	myState->AddSelectorInDecorator("Selector3", ranAction1, &Action1::Check3);
+
+	//myHome = myState->AddRootSequenceInAction<MyHome>("Action3");
+	//sitDown = myState->AddRootSequenceInAction<SitDown>("Action3");
 
 	//게임루프 가정
 	while (true)

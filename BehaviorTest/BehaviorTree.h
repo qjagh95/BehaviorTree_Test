@@ -109,6 +109,8 @@ public:
 		void DisableTickFunc() { m_isCheck = false; }
 		void EnableTickFunc() { m_isCheck = true; }
 
+		vector<function<bool(float)>>* GetDecorator() { return &m_vecDecorator; }
+
 	private:
 		int Process(float DeltaTime);
 
@@ -161,6 +163,7 @@ public:
 
 		void DisableTickFunc() { m_isCheck = false; }
 		void EnableTickFunc() { m_isCheck = true; }
+		vector<function<bool(float)>>* GetDecorator() { return &m_vecDecorator; }
 
 	private:
 		Sequence() { m_vecDecorator.reserve(4);	m_TimeVar = 0.0f; m_CheckTime = 0.0f; m_isCheck = false; }
@@ -204,24 +207,19 @@ public:
 public:
 	void Update(float DeltaTime);
 
-	void AddRootSequenceInSequence(const string& NewSequenceKeyName);
-	void AddRootSequenceInSelector(const string& NewSelectorKeyName);
-	void AddRootSelectorInSequence(const string& NewSequenceKeyName);
-	void AddRootSelectorInSelector(const string& NewSelectorKeyName);
-
 	template<typename T>
-	void AddRootSequenceInAction(const string& ActionName)
+	T* AddRootSequenceInAction(const string& ActionName)
 	{
 		if (m_RootSequence == NULLPTR)
 		{
 			assert(false);
-			return;
+			return NULLPTR;
 		}
 
 		if (m_RootNode == NULLPTR)
 		{
 			assert(false);
-			return;
+			return NULLPTR;
 		}
 
 		T* newAction = new T();
@@ -233,22 +231,23 @@ public:
 
 		m_RootSequence->AddChild(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
-
 		m_Count++;
+
+		return newAction;
 	}
 	template<typename T>
-	void AddRootSelectorInAction(const string& ActionName)
+	T* AddRootSelectorInAction(const string& ActionName)
 	{
 		if (m_RootNode == NULLPTR)
 		{
 			assert(false);
-			return;
+			return NULLPTR;
 		}
 
 		if (m_RootSelector == NULLPTR)
 		{
 			assert(false);
-			return;
+			return NULLPTR;
 		}
 
 		T* newAction = new T();
@@ -261,16 +260,18 @@ public:
 		m_RootSelector->AddChild(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
 		m_Count++;
+
+		return newAction;
 	}
 	template<typename T>
-	void AddSequenceInAction(const string& SequenceKeyName, const string& ActionName)
+	T* AddSequenceInAction(const string& SequenceKeyName, const string& ActionName)
 	{
 		Sequence* getSequence = FindSequence(SequenceKeyName);
 
 		if (getSequence == NULLPTR)
 		{
 			assert(false);
-			return;
+			return NULLPTR;
 		}
 
 		T* newAction = new T();
@@ -283,16 +284,18 @@ public:
 		getSequence->AddChild(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
 		m_Count++;
+		
+		return newAction;
 	}
 	template<typename T>
-	void AddSelectorInAction(const string& SelectorKeyName, const string& ActionName)
+	T* AddSelectorInAction(const string& SelectorKeyName, const string& ActionName)
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
 		if (getSelector == NULLPTR)
 		{
 			assert(false);
-			return;
+			return NULLPTR;
 		}
 
 		T* newAction = new T();
@@ -305,11 +308,20 @@ public:
 		getSelector->AddChild(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
 		m_Count++;
+
+		return newAction;
 	}
-	void AddSequenceInSelector(const string& SequenceKeyName, const string& SelectorKeyName);
-	void AddSequenceInSequence(const string& OldSequenceKey, const string& NewSequenceKey);
-	void AddSelectorInSelector(const string& OldSelectorKey, const string& NewSelector);
-	void AddSelectorInSequence(const string& SelectorKeyName, const string& SequenceKeyName);
+
+	Sequence* AddRootSequenceInSequence(const string& NewSequenceKeyName);
+	Selector* AddRootSequenceInSelector(const string& NewSelectorKeyName);
+	Sequence* AddRootSelectorInSequence(const string& NewSequenceKeyName);
+	Selector* AddRootSelectorInSelector(const string& NewSelectorKeyName);
+
+	Selector* AddSequenceInSelector(const string& SequenceKeyName, const string& SelectorKeyName);
+	Sequence* AddSequenceInSequence(const string& OldSequenceKey, const string& NewSequenceKey);
+	Selector* AddSelectorInSelector(const string& OldSelectorKey, const string& NewSelector);
+	Sequence* AddSelectorInSequence(const string& SelectorKeyName, const string& SequenceKeyName);
+
 	void SetSelectorRandomProcess(const string& SelectorKeyName, bool Value);
 	void SequenceTickFuncDisable(const string& SequenceKeyName);
 	void SequenceTickFuncEnable(const string& SequenceKeyName);
