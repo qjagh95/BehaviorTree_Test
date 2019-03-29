@@ -19,11 +19,13 @@
 #include <functional>
 #include <time.h>
 
+
 enum BT_ROOT_CHILD_TYPE
 {
 	BT_NONE,
 	BT_SELECTOR,
 	BT_SEQUENCE,
+	BT_ACTION,
 };
 
 enum BT_ACTION_TYPE
@@ -35,5 +37,6 @@ enum BT_ACTION_TYPE
 };
 
 using namespace std;
+#define NULLPTR nullptr
 
 #endif //PCH_H

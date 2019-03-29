@@ -30,7 +30,7 @@ BehaviorTree* BTManager::CreateBehaviorTree(const string& KeyName, BT_ROOT_CHILD
 {
 	BehaviorTree* newTree = new BehaviorTree();
 	newTree->m_TagName = KeyName;
-	newTree->Init(eStyle);
+	newTree->Init(eStyle, NULLPTR);
 
 	m_TreeMap.insert(make_pair(KeyName, newTree));
 

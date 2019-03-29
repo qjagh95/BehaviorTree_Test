@@ -1,3 +1,5 @@
+#pragma once
+
 class CGameObject;
 class BehaviorTree
 {
@@ -19,7 +21,11 @@ public:
 		void SetType(BT_ACTION_TYPE type) { m_Type = type; }
 		void SetKeepAction(Action* action) { m_KeepNode = action; }
 		Action* GetKeepAction() const { return m_KeepNode; }
+		void SetKeepActionType(BT_ROOT_CHILD_TYPE type) { m_KeepNodeType = type; }
+		BT_ROOT_CHILD_TYPE GetKeepActionType() const { return m_KeepNodeType; }
 		vector<function<bool(float)>>* GetDecoratorVec() { return &m_vecDecorator; }
+		void SetActionType(BT_ROOT_CHILD_TYPE type) { m_ActionType = type; }
+		BT_ROOT_CHILD_TYPE GetActionType() const { return m_ActionType; }
 
 		void AddDecorator(bool(*pFunc)(float))
 		{
@@ -33,16 +39,23 @@ public:
 		}
 
 	protected:
-		Action() { m_KeepNode = NULL; m_pObject = NULL; m_Type = ACTION_NONE; }
+
+		Action() { m_KeepNode = NULLPTR; m_pObject = NULLPTR; m_Type = ACTION_NONE; m_ActionType = BT_NONE; }
 
 		vector<function<bool(float)>> m_vecDecorator;
 		string m_TagName;
 		string m_TreeName;
 		BT_ACTION_TYPE m_Type;
+		BT_ROOT_CHILD_TYPE m_ActionType;
+		BT_ROOT_CHILD_TYPE m_KeepNodeType;
 		Action* m_KeepNode;
 
 	private:
 		CGameObject* m_pObject;
+
+	public:
+		friend class Sequence;
+		friend class Selector;
 	};
 
 	class CompositNode : public Action
@@ -193,12 +206,106 @@ public:
 
 	void AddRootSequenceInSequence(const string& NewSequenceKeyName);
 	void AddRootSequenceInSelector(const string& NewSelectorKeyName);
-	void AddRootSequenceInAction(const string& SequenceKeyName, const string& ActionName, Action* NewAction);
 	void AddRootSelectorInSequence(const string& NewSequenceKeyName);
 	void AddRootSelectorInSelector(const string& NewSelectorKeyName);
-	void AddRootSelectorInAction(const string& SelectorKeyName, const string& ActionName, Action* NewAction);
-	void AddSequenceInAction(const string& SequenceKeyName, const string& ActionName, Action* NewAction);
-	void AddSelectorInAction(const string& SelectorKeyName, const string& ActionName, Action* NewAction);
+
+	template<typename T>
+	void AddRootSequenceInAction(const string& ActionName)
+	{
+		if (m_RootSequence == NULLPTR)
+		{
+			assert(false);
+			return;
+		}
+
+		if (m_RootNode == NULLPTR)
+		{
+			assert(false);
+			return;
+		}
+
+		T* newAction = new T();
+		newAction->Init();
+		newAction->SetTag(ActionName);
+		newAction->SetTreeName(m_TagName);
+		newAction->SetKeepAction(m_RootSequence);
+		newAction->SetActionType(BT_ACTION);
+
+		m_RootSequence->AddChild(newAction);
+		m_ActionMap.insert(make_pair(ActionName, newAction));
+
+		m_Count++;
+	}
+	template<typename T>
+	void AddRootSelectorInAction(const string& ActionName)
+	{
+		if (m_RootNode == NULLPTR)
+		{
+			assert(false);
+			return;
+		}
+
+		if (m_RootSelector == NULLPTR)
+		{
+			assert(false);
+			return;
+		}
+
+		T* newAction = new T();
+		newAction->Init();
+		newAction->SetTag(ActionName);
+		newAction->SetTreeName(m_TagName);
+		newAction->SetKeepAction(m_RootSelector);
+		newAction->SetActionType(BT_ACTION);
+
+		m_RootSelector->AddChild(newAction);
+		m_ActionMap.insert(make_pair(ActionName, newAction));
+		m_Count++;
+	}
+	template<typename T>
+	void AddSequenceInAction(const string& SequenceKeyName, const string& ActionName)
+	{
+		Sequence* getSequence = FindSequence(SequenceKeyName);
+
+		if (getSequence == NULLPTR)
+		{
+			assert(false);
+			return;
+		}
+
+		T* newAction = new T();
+		newAction->Init();
+		newAction->SetTag(ActionName);
+		newAction->SetTreeName(m_TagName);
+		newAction->SetKeepAction(getSequence);
+		newAction->SetActionType(BT_ACTION);
+
+		getSequence->AddChild(newAction);
+		m_ActionMap.insert(make_pair(ActionName, newAction));
+		m_Count++;
+	}
+	template<typename T>
+	void AddSelectorInAction(const string& SelectorKeyName, const string& ActionName)
+	{
+		Selector* getSelector = FindSelector(SelectorKeyName);
+
+		if (getSelector == NULLPTR)
+		{
+			assert(false);
+			return;
+		}
+
+		T* newAction = new T();
+		newAction->Init();
+		newAction->SetTag(ActionName);
+		newAction->SetTreeName(m_TagName);
+		newAction->SetKeepAction(getSelector);
+		newAction->SetActionType(BT_ACTION);
+
+		getSelector->AddChild(newAction);
+		m_ActionMap.insert(make_pair(ActionName, newAction));
+		m_Count++;
+	}
 	void AddSequenceInSelector(const string& SequenceKeyName, const string& SelectorKeyName);
 	void AddSequenceInSequence(const string& OldSequenceKey, const string& NewSequenceKey);
 	void AddSelectorInSelector(const string& OldSelectorKey, const string& NewSelector);
@@ -213,7 +320,7 @@ public:
 	{
 		Sequence* getSquence = FindSequence(SequenceKeyName);
 
-		if (getSquence == NULL)
+		if (getSquence == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -227,7 +334,7 @@ public:
 	{
 		Sequence* getSquence = FindSequence(SequenceKeyName);
 
-		if (getSquence == NULL)
+		if (getSquence == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -240,7 +347,7 @@ public:
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
-		if (getSelector == NULL)
+		if (getSelector == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -254,7 +361,7 @@ public:
 	{
 		Selector* getSelector = FindSelector(SelectorKeyName);
 
-		if (getSelector == NULL)
+		if (getSelector == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -263,38 +370,11 @@ public:
 		getSelector->AddDecorator(object, pFunc);
 	}
 
-	void SetSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, void(*pFunc)(float))
-	{
-		Selector* getSelector = FindSelector(SelectorKeyName);
-
-		if (getSelector == NULL)
-		{
-			assert(false);
-			false;
-		}
-
-		getSelector->AddTickFunc(CallbackTime, pFunc);
-	}
-
-	template<typename T>
-	void SetSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, T* object, void(T::*pFunc)(float))
-	{
-		Selector* getSelector = FindSelector(SelectorKeyName);
-
-		if (getSelector == NULL)
-		{
-			assert(false);
-			false;
-		}
-
-		getSelector->AddTickFunc(CallbackTime, object, pFunc);
-	}
-
 	void AddActionInDecorator(const string& ActionName, bool(*pFunc)(float))
 	{
 		Action* getAction = FindAction(ActionName);
 
-		if (getAction == NULL)
+		if (getAction == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -308,7 +388,7 @@ public:
 	{
 		Action* getAction = FindAction(ActionName);
 
-		if (getAction == NULL)
+		if (getAction == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -317,11 +397,38 @@ public:
 		getAction->AddDecorator(object, pFunc);
 	}
 
+	void SetSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, void(*pFunc)(float))
+	{
+		Selector* getSelector = FindSelector(SelectorKeyName);
+
+		if (getSelector == NULLPTR)
+		{
+			assert(false);
+			false;
+		}
+
+		getSelector->AddTickFunc(CallbackTime, pFunc);
+	}
+
+	template<typename T>
+	void SetSelectorInTickFunc(const string& SelectorKeyName, float CallbackTime, T* object, void(T::*pFunc)(float))
+	{
+		Selector* getSelector = FindSelector(SelectorKeyName);
+
+		if (getSelector == NULLPTR)
+		{
+			assert(false);
+			false;
+		}
+
+		getSelector->AddTickFunc(CallbackTime, object, pFunc);
+	}
+
 	void SetSequenceInTickFunc(const string& SequenceKeyName, float CallbackTime, void(*pFunc)(float))
 	{
 		Sequence* getSequence = FindSequence(SequenceKeyName);
 
-		if (getSequence == NULL)
+		if (getSequence == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -335,7 +442,7 @@ public:
 	{
 		Sequence* getSequence = FindSequence(SequenceKeyName);
 
-		if (getSequence == NULL)
+		if (getSequence == NULLPTR)
 		{
 			assert(false);
 			false;
@@ -353,8 +460,7 @@ public:
 	int GetCount() const { return m_Count; }
 
 private:
-	void Init(BT_ROOT_CHILD_TYPE eStyle = BT_SEQUENCE);
-	void GUIRender();
+	void Init(BT_ROOT_CHILD_TYPE eStyle = BT_SEQUENCE, CGameObject* Object = NULLPTR);
 
 	Sequence* FindSequence(const string& KeyName);
 	Selector* FindSelector(const string& KeyName);
@@ -380,8 +486,9 @@ private:
 	string m_RootName;
 	string m_RootSequenceName;
 	string m_RootSelectorName;
-
 	int m_Count;
+
+	CGameObject* m_Object;
 
 private:
 	BehaviorTree();
