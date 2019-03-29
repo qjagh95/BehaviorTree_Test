@@ -97,7 +97,6 @@ public:
 		void EnableTickFunc() { m_isCheck = true; }
 
 	private:
-		void Render();
 		int Process(float DeltaTime);
 
 	private:
@@ -151,9 +150,6 @@ public:
 		void EnableTickFunc() { m_isCheck = true; }
 
 	private:
-		void Render();
-
-	private:
 		Sequence() { m_vecDecorator.reserve(4);	m_TimeVar = 0.0f; m_CheckTime = 0.0f; m_isCheck = false; }
 		~Sequence() {}
 
@@ -181,9 +177,6 @@ public:
 		{
 			return m_ChildNode->Ending(DeltaTime);
 		}
-
-	private:
-		void Render();
 
 	private:
 		Action* m_ChildNode;

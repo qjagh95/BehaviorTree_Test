@@ -93,15 +93,12 @@ int main()
 	SitDown* sitDown = new SitDown();
 
 	BehaviorTree* myState = BTManager::Get()->CreateBehaviorTree("PlayerState", BT_SEQUENCE);
-
 	myState->AddRootSequenceInSelector("RandomSelector");
 	myState->AddSelectorInAction("RandomSelector", "Action1", ranAction1);
 	myState->AddSelectorInAction("RandomSelector", "Action2", ranAction2);
 	
 	myState->AddRootSequenceInAction("MyHome", "Action3", myHome);
 	myState->AddRootSequenceInAction("sitDown", "Action3", sitDown);
-
-	int a = myState->GetCount();
 
 	//게임루프 가정
 	while (true)
