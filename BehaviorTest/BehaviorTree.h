@@ -61,14 +61,18 @@ public:
 	class CompositNode : public Action
 	{
 	public:
-		void AddChild(Action* Node) { m_ChildList.push_back(Node); }
-		vector<Action*>* GetChildList() { return &m_ChildList; }
+		void AddChildAction(Action* action) { m_ChildAction.push_back(action); }
+		void AddChildNode(CompositNode* Node) { m_ChildAction.push_back(Node); }
+
+		vector<Action*>* GetChildActionList() { return &m_ChildAction; }
+		vector<CompositNode*>* GetChildNodeList() { return &m_ChildNode; }
 
 	protected:
 		void SetAllActionObject(CGameObject* Object);
 
 	protected:
-		vector<Action*> m_ChildList;
+		vector<Action*> m_ChildAction;
+		vector<CompositNode*> m_ChildNode;
 
 		CompositNode() {}
 		virtual ~CompositNode() {}
@@ -228,8 +232,9 @@ public:
 		newAction->SetTreeName(m_TagName);
 		newAction->SetKeepAction(m_RootSequence);
 		newAction->SetActionType(BT_ACTION);
+		newAction->SetKeepActionType(BT_NONE);
 
-		m_RootSequence->AddChild(newAction);
+		m_RootSequence->AddChildAction(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
 		m_Count++;
 
@@ -256,8 +261,9 @@ public:
 		newAction->SetTreeName(m_TagName);
 		newAction->SetKeepAction(m_RootSelector);
 		newAction->SetActionType(BT_ACTION);
-
-		m_RootSelector->AddChild(newAction);
+		newAction->SetKeepActionType(BT_NONE);
+		
+		m_RootSelector->AddChildAction(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
 		m_Count++;
 
@@ -280,8 +286,9 @@ public:
 		newAction->SetTreeName(m_TagName);
 		newAction->SetKeepAction(getSequence);
 		newAction->SetActionType(BT_ACTION);
+		newAction->SetKeepActionType(BT_SEQUENCE);
 
-		getSequence->AddChild(newAction);
+		getSequence->AddChildAction(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
 		m_Count++;
 		
@@ -304,8 +311,9 @@ public:
 		newAction->SetTreeName(m_TagName);
 		newAction->SetKeepAction(getSelector);
 		newAction->SetActionType(BT_ACTION);
+		newAction->SetKeepActionType(BT_SELECTOR);
 
-		getSelector->AddChild(newAction);
+		getSelector->AddChildAction(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
 		m_Count++;
 
