@@ -12,7 +12,7 @@ public:
 	int Update(float DeltaTime) override
 	{
 		cout << "의자에서 일어난다" << endl;
-		return ACTION_RUNNING;
+		return ACTION_FALSE;
 	}
 	
 	void Ending(float DeltaTime) override
@@ -102,23 +102,24 @@ int main()
 {
 	srand(time(NULL));
 
-	//ChairUp* chairUp = new ChairUp();
+	ChairUp* chairUp = new ChairUp();
 	Action1* ranAction1;
 	Action2* ranAction2;
 
 	BehaviorTree* myState = BTManager::Get()->CreateBehaviorTree("PlayerState", BT_SELECTOR);
+	chairUp = myState->AddRootSelectorInAction<ChairUp>("Action1");
 	myState->AddRootSelectorInSelector("Selector1");
-	//ranAction2 = myState->AddSelectorInAction<Action2>("Selector1", "Action2");
 
+	ranAction1 = myState->AddSelectorInAction<Action1>("Selector1", "Action1");
+	ranAction2 = myState->AddSelectorInAction<Action2>("Selector1", "Action2");
 	myState->AddSelectorInSelector("Selector1", "Selector2");
 	myState->AddSelectorInSelector("Selector2", "Selector3");
 
-	ranAction1 = myState->AddSelectorInAction<Action1>("Selector1", "Action1");
-	ranAction2 = myState->AddSelectorInAction<Action2>("Selector2", "Action2");
+	//myState->AddSelectorInDecorator("Selector1", ranAction1, &Action1::Check1);
+	//myState->AddSelectorInDecorator("Selector2", ranAction1, &Action1::Check2);
+	//myState->AddSelectorInDecorator("Selector3", ranAction1, &Action1::Check3);
 
-	myState->AddSelectorInDecorator("Selector1", ranAction1, &Action1::Check1);
-	myState->AddSelectorInDecorator("Selector2", ranAction1, &Action1::Check2);
-	myState->AddSelectorInDecorator("Selector3", ranAction1, &Action1::Check3);
+	//myState->AddActionInDecorator("Action1", ranAction1, &Action1::Check1);
 
 	//myHome = myState->AddRootSequenceInAction<MyHome>("Action3");
 	//sitDown = myState->AddRootSequenceInAction<SitDown>("Action3");

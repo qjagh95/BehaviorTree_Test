@@ -92,7 +92,6 @@ BehaviorTree::Sequence* BehaviorTree::AddRootSequenceInSequence(const string& Ne
 	newSequence->SetTreeName(m_TagName);
 	newSequence->SetKeepAction(m_RootSequence);
 	newSequence->SetActionType(BT_SEQUENCE);
-	newSequence->SetKeepActionType(BT_NONE);
 
 	m_RootSequence->AddChildNode(newSequence);
 	m_SequenceMap.insert(make_pair(NewSequenceKeyName, newSequence));
@@ -128,7 +127,6 @@ BehaviorTree::Selector* BehaviorTree::AddRootSequenceInSelector(const string & N
 	newSelector->SetTreeName(m_TagName);
 	newSelector->SetKeepAction(m_RootSequence);
 	newSelector->SetActionType(BT_SELECTOR);
-	newSelector->SetKeepActionType(BT_NONE);
 
 	m_RootSequence->AddChildNode(newSelector);
 	m_SelectorMap.insert(make_pair(NewSelectorKeyName, newSelector));
@@ -159,7 +157,6 @@ BehaviorTree::Sequence* BehaviorTree::AddRootSelectorInSequence(const string & N
 	newSequence->SetTreeName(m_TagName);
 	newSequence->SetKeepAction(m_RootSelector);
 	newSequence->SetActionType(BT_SEQUENCE);
-	newSequence->SetKeepActionType(BT_NONE);
 
 	m_RootSelector->AddChildNode(newSequence);
 	m_SequenceMap.insert(make_pair(NewSequenceKeyName, newSequence));
@@ -188,7 +185,6 @@ BehaviorTree::Selector* BehaviorTree::AddRootSelectorInSelector(const string & N
 	newSelector->SetTreeName(m_TagName);
 	newSelector->SetKeepAction(m_RootSelector);
 	newSelector->SetActionType(BT_SELECTOR);
-	newSelector->SetKeepActionType(BT_NONE);
 
 	m_RootSelector->AddChildNode(newSelector);
 	m_SelectorMap.insert(make_pair(NewSelectorKeyName, newSelector));
@@ -223,7 +219,6 @@ BehaviorTree::Selector* BehaviorTree::AddSequenceInSelector(const string & Seque
 	newSelector->SetTreeName(m_TagName);
 	newSelector->SetKeepAction(getSequence);
 	newSelector->SetActionType(BT_SELECTOR);
-	newSelector->SetKeepActionType(BT_SEQUENCE);
 
 	getSequence->AddChildNode(newSelector);
 	m_SelectorMap.insert(make_pair(SelectorKeyName, newSelector));
@@ -257,7 +252,6 @@ BehaviorTree::Sequence* BehaviorTree::AddSelectorInSequence(const string & Selec
 	newSequence->SetTreeName(m_TagName);
 	newSequence->SetKeepAction(getSelector);
 	newSequence->SetActionType(BT_SEQUENCE);
-	newSequence->SetKeepActionType(BT_SELECTOR);
 
 	getSelector->AddChildNode(newSequence);
 	m_SequenceMap.insert(make_pair(SequenceKeyName, newSequence));
@@ -291,7 +285,6 @@ BehaviorTree::Sequence* BehaviorTree::AddSequenceInSequence(const string & OldSe
 	newSequence->SetTreeName(m_TagName);
 	newSequence->SetKeepAction(getSelector);
 	newSequence->SetActionType(BT_SEQUENCE);
-	newSequence->SetKeepActionType(BT_SELECTOR);
 
 	getSelector->AddChildNode(newSequence);
 	m_SequenceMap.insert(make_pair(NewSequenceKey, newSequence));
@@ -390,7 +383,6 @@ BehaviorTree::Selector* BehaviorTree::AddSelectorInSelector(const string & OldSe
 	newSelector->SetTreeName(m_TagName);
 	newSelector->SetKeepAction(getSelector);
 	newSelector->SetActionType(BT_SELECTOR);
-	newSelector->SetKeepActionType(BT_SELECTOR);
 
 	getSelector->AddChildNode(newSelector);
 	m_SelectorMap.insert(make_pair(NewSelector, newSelector));
@@ -419,7 +411,6 @@ void BehaviorTree::AddRootChildSelector()
 	m_RootSelector->SetTreeName(m_TagName);
 	m_RootSelector->SetKeepAction(m_RootNode);
 	m_RootSelector->SetActionType(BT_SELECTOR);
-	m_RootSelector->SetKeepActionType(BT_NONE);
 
 	m_RootNode->SetChild(m_RootSelector);
 }
@@ -444,7 +435,6 @@ void BehaviorTree::AddRootChildSequence()
 	m_RootSequence->SetTreeName(m_TagName);
 	m_RootSequence->SetKeepAction(m_RootNode);
 	m_RootSequence->SetActionType(BT_SEQUENCE);
-	m_RootSequence->SetKeepActionType(BT_NONE);
 
 	m_RootNode->SetChild(m_RootSequence);
 }
@@ -519,6 +509,11 @@ void BehaviorTree::CompositNode::SetAllActionObject(CGameObject * Object)
 
 int BehaviorTree::Selector::Update(float DeltaTime)
 {
+	return Process(DeltaTime);
+}
+
+int BehaviorTree::Selector::Process(float DeltaTime)
+{
 	if (m_isCheck == true)
 	{
 		m_TimeVar += DeltaTime;
@@ -530,92 +525,68 @@ int BehaviorTree::Selector::Update(float DeltaTime)
 		}
 	}
 
-	//if (m_vecDecorator.empty() == true)
-	//	return Process(DeltaTime);
-	//else
-	//{
-	//	bool Value = false;
-	//	for (size_t i = 0; i < m_vecDecorator.size(); i++)
-	//	{
-	//		Value = m_vecDecorator[i](DeltaTime);
+	if (m_bRandom == false)
+	{
+		for (size_t i = 0; i < m_vecDecorator.size(); i++)
+		{
+			if (m_vecDecorator[i](DeltaTime) == false)
+				return ACTION_FALSE;
+		}
 
-	//		if (Value == false)
-	//			return ACTION_FALSE;
-	//	}
-	//	return Process(DeltaTime);
-	//}
-}
+		for (size_t i = 0; i < m_ChildAction.size(); i++)
+		{
+			for (size_t j = 0; j < m_ChildAction[i]->GetDecoratorVec()->size(); j++)
+			{
+				if (m_ChildAction[i]->GetDecoratorVec()->at(j)(DeltaTime) == false)
+					return ACTION_FALSE;
+			}
 
-int BehaviorTree::Selector::Process(float DeltaTime)
-{
-	//if (m_bRandom == false)
-	//{
-	//	for (size_t i = 0; i < m_ChildAction.size(); i++)
-	//	{
-	//		if (m_ChildAction[i]->GetDecoratorVec()->empty() == false)
-	//		{
-	//			bool Temp = true;
-	//			for (size_t i = 0; i < m_ChildAction[i]->GetDecoratorVec()->size(); i++)
-	//			{
-	//				Temp = m_ChildAction[i]->GetDecoratorVec()->at(i)(DeltaTime);
+			switch ((BT_ACTION_TYPE)m_ChildAction[i]->Update(DeltaTime))
+			{
+			case ACTION_SUCCED:
+				m_ChildAction[i]->Ending(DeltaTime);
+				return ACTION_SUCCED;
+				break;
+			case ACTION_FALSE:
+				break;
+			case ACTION_RUNNING:
+				return ACTION_RUNNING;
+				break;
+			}
+		}
+		return ACTION_FALSE;
+	}
+	else
+	{
+		for (size_t i = 0; i < m_vecDecorator.size(); i++)
+		{
+			if (m_vecDecorator[i](DeltaTime) == false)
+				return ACTION_FALSE;
+		}
 
-	//				if (Temp == false)
-	//					return ACTION_FALSE;
-	//			}
-	//		}
+		int RandomNum = rand() % m_ChildAction.size();
 
-	//		BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildAction[i]->Update(DeltaTime);
-	//		m_ChildAction[i]->SetType(type);
+		for (size_t i = 0; i < m_ChildAction[RandomNum]->GetDecoratorVec()->size(); i++)
+		{
+			if (m_ChildAction[RandomNum]->GetDecoratorVec()->at(i)(DeltaTime) == false)
+				return ACTION_FALSE;
+		}
 
-	//		switch (type)
-	//		{
-	//		case ACTION_SUCCED:
-	//			m_ChildAction[i]->Ending(DeltaTime);
-	//			return ACTION_SUCCED;
-	//			break;
-	//		case ACTION_FALSE:
-	//			break;
-	//		case ACTION_RUNNING:
-	//			return ACTION_RUNNING;
-	//			break;
-	//		}
-	//	}
-	//	return ACTION_FALSE;
-	//}
-	//else
-	//{
-	//	int RandomNum = rand() % m_ChildAction.size();
-
-	//	if (m_ChildAction[RandomNum]->GetDecoratorVec()->empty() == false)
-	//	{
-	//		bool Temp = true;
-	//		for (size_t i = 0; i < m_ChildAction[RandomNum]->GetDecoratorVec()->size(); i++)
-	//		{
-	//			Temp = m_ChildAction[RandomNum]->GetDecoratorVec()->at(i)(DeltaTime);
-
-	//			if (Temp == false)
-	//				return ACTION_FALSE;
-	//		}
-	//	}
-
-	//	BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildAction[RandomNum]->Update(DeltaTime);
-	//	m_ChildAction[RandomNum]->SetType(type);
-
-	//	switch (type)
-	//	{
-	//	case ACTION_SUCCED:
-	//		m_ChildAction[RandomNum]->Ending(DeltaTime);
-	//		return ACTION_SUCCED;
-	//		break;
-	//	case ACTION_FALSE:
-	//		return ACTION_FALSE;
-	//		break;
-	//	case ACTION_RUNNING:
-	//		return ACTION_RUNNING;
-	//		break;
-	//	}
-	//	return ACTION_FALSE;
-	//}
+		switch ((BT_ACTION_TYPE)m_ChildAction[RandomNum]->Update(DeltaTime))
+		{
+		case ACTION_SUCCED:
+			m_ChildAction[RandomNum]->Ending(DeltaTime);
+			return ACTION_SUCCED;
+			break;
+		case ACTION_FALSE:
+			return ACTION_FALSE;
+			break;
+		case ACTION_RUNNING:
+			return ACTION_RUNNING;
+			break;
+		}
+		return ACTION_FALSE;
+	}
 }
 
 int BehaviorTree::Sequence::Update(float DeltaTime)
@@ -631,80 +602,33 @@ int BehaviorTree::Sequence::Update(float DeltaTime)
 		}
 	}
 
-	//if (m_vecDecorator.empty() == true)
-	//{
-	//	for (size_t i = 0; i < m_ChildAction.size(); i++)
-	//	{
-	//		if (m_ChildAction[i]->GetDecoratorVec()->empty() == false)
-	//		{
-	//			bool Temp = true;
-	//			for (size_t i = 0; i < m_ChildAction[i]->GetDecoratorVec()->size(); i++)
-	//			{
-	//				Temp = m_ChildAction[i]->GetDecoratorVec()->at(i)(DeltaTime);
+	for (size_t i = 0; i < m_vecDecorator.size(); i++)
+	{
+		if (m_vecDecorator[i](DeltaTime) == false)
+			return ACTION_SUCCED;
+	}
 
-	//				if (Temp == false)
-	//					return ACTION_SUCCED;
-	//			}
-	//		}
+	for (size_t i = 0; i < m_ChildAction.size(); i++)
+	{
+		for (size_t j = 0; j < m_ChildAction[i]->GetDecoratorVec()->size() - 1; j++)
+		{
+			if (m_ChildAction[i]->GetDecoratorVec()->at(j)(DeltaTime) == false)
+				return ACTION_SUCCED;
+		}
 
-	//		BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildAction[i]->Update(DeltaTime);
-	//		m_ChildAction[i]->SetType(type);
+		switch ((BT_ACTION_TYPE)m_ChildAction[i]->Update(DeltaTime))
+		{
+		case ACTION_RUNNING:
+			return ACTION_RUNNING;
+			break;
+		case ACTION_FALSE:
+			m_ChildAction[i]->Ending(DeltaTime);
+			return ACTION_FALSE;
+			break;
+		case ACTION_SUCCED:
+			break;
+		}
+	}
 
-	//		switch (type)
-	//		{
-	//		case ACTION_RUNNING:
-	//			return ACTION_RUNNING;
-	//			break;
-	//		case ACTION_FALSE:
-	//			m_ChildAction[i]->Ending(DeltaTime);
-	//			return ACTION_FALSE;
-	//			break;
-	//		case ACTION_SUCCED:
-	//			break;
-	//		}
-	//	}
-	//}
-	//else
-	//{
-	//	bool Value = true;
-	//	for (size_t i = 0; i < m_vecDecorator.size(); i++)
-	//	{
-	//		Value = m_vecDecorator[i](DeltaTime);
-
-	//		if (Value == false)
-	//			return ACTION_SUCCED;
-	//	}
-
-	//	for (size_t i = 0; i < m_ChildAction.size(); i++)
-	//	{
-	//		if (m_ChildAction[i]->GetDecoratorVec()->empty() == false)
-	//		{
-	//			bool Temp = true;
-	//			for (size_t i = 0; i < m_ChildAction[i]->GetDecoratorVec()->size(); i++)
-	//			{
-	//				Temp = m_ChildAction[i]->GetDecoratorVec()->at(i)(DeltaTime);
-
-	//				if (Temp == false)
-	//					return ACTION_SUCCED;
-	//			}
-	//		}
-
-	//		BT_ACTION_TYPE type = (BT_ACTION_TYPE)m_ChildAction[i]->Update(DeltaTime);
-	//		m_ChildAction[i]->SetType(type);
-
-	//		switch (type)
-	//		{
-	//		case ACTION_RUNNING:
-	//			return ACTION_RUNNING;
-	//			break;
-	//		case ACTION_FALSE:
-	//			m_ChildAction[i]->Ending(DeltaTime);
-	//			return ACTION_FALSE;
-	//			break;
-	//		case ACTION_SUCCED:
-	//			break;
-	//		}
-	//	}
-	//}
-	//return ACTION_SUCCED;
+	return ACTION_SUCCED;
 }

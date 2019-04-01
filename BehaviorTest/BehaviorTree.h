@@ -17,12 +17,8 @@ public:
 		string GetTreeName() const { return m_TreeName; }
 		void SetObject(CGameObject* object) { m_pObject = object; }
 		CGameObject* GetTargetObject() const { return m_pObject; }
-		BT_ACTION_TYPE GetType() const { return m_Type; }
-		void SetType(BT_ACTION_TYPE type) { m_Type = type; }
 		void SetKeepAction(Action* action) { m_KeepNode = action; }
 		Action* GetKeepAction() const { return m_KeepNode; }
-		void SetKeepActionType(BT_ROOT_CHILD_TYPE type) { m_KeepNodeType = type; }
-		BT_ROOT_CHILD_TYPE GetKeepActionType() const { return m_KeepNodeType; }
 		vector<function<bool(float)>>* GetDecoratorVec() { return &m_vecDecorator; }
 		void SetActionType(BT_ROOT_CHILD_TYPE type) { m_ActionType = type; }
 		BT_ROOT_CHILD_TYPE GetActionType() const { return m_ActionType; }
@@ -39,15 +35,12 @@ public:
 		}
 
 	protected:
-
-		Action() { m_KeepNode = NULLPTR; m_pObject = NULLPTR; m_Type = ACTION_NONE; m_ActionType = BT_NONE; }
+		Action() { m_KeepNode = NULLPTR; m_pObject = NULLPTR; m_ActionType = BT_NONE; }
 
 		vector<function<bool(float)>> m_vecDecorator;
 		string m_TagName;
 		string m_TreeName;
-		BT_ACTION_TYPE m_Type;
 		BT_ROOT_CHILD_TYPE m_ActionType;
-		BT_ROOT_CHILD_TYPE m_KeepNodeType;
 		Action* m_KeepNode;
 
 	private:
@@ -84,17 +77,6 @@ public:
 		virtual int Update(float DeltaTime) override;
 		void SetRandomProcess(bool Value) { m_bRandom = Value; }
 
-		void AddDecorator(bool(*pFunc)(float))
-		{
-			m_vecDecorator.push_back(bind(pFunc, placeholders::_1));
-		}
-
-		template<typename T>
-		void AddDecorator(T* object, bool(T::*pFunc)(float))
-		{
-			m_vecDecorator.push_back(bind(pFunc, object, placeholders::_1));
-		}
-
 		void AddTickFunc(float CallbackTime, void(*pFunc)(float))
 		{
 			m_isCheck = true;
@@ -113,8 +95,6 @@ public:
 		void DisableTickFunc() { m_isCheck = false; }
 		void EnableTickFunc() { m_isCheck = true; }
 
-		vector<function<bool(float)>>* GetDecorator() { return &m_vecDecorator; }
-
 	private:
 		int Process(float DeltaTime);
 
@@ -124,7 +104,6 @@ public:
 
 	private:
 		bool m_bRandom;
-		vector<function<bool(float)>> m_vecDecorator;
 		function<void(float)> m_TickFunc;
 		float m_TimeVar;
 		float m_CheckTime;
@@ -139,17 +118,6 @@ public:
 	public:
 		virtual int Update(float DeltaTime) override;
 
-		void AddDecorator(bool(*pFunc)(float))
-		{
-			m_vecDecorator.push_back(bind(pFunc, placeholders::_1));
-		}
-
-		template<typename T>
-		void AddDecorator(T* object, bool(T::*pFunc)(float))
-		{
-			m_vecDecorator.push_back(bind(pFunc, object, placeholders::_1));
-		}
-
 		void AddTickFunc(float CallbackTime, void(*pFunc)(float))
 		{
 			m_isCheck = true;
@@ -167,13 +135,11 @@ public:
 
 		void DisableTickFunc() { m_isCheck = false; }
 		void EnableTickFunc() { m_isCheck = true; }
-		vector<function<bool(float)>>* GetDecorator() { return &m_vecDecorator; }
 
 	private:
 		Sequence() { m_vecDecorator.reserve(4);	m_TimeVar = 0.0f; m_CheckTime = 0.0f; m_isCheck = false; }
 		~Sequence() {}
 
-		vector<function<bool(float)>> m_vecDecorator;
 		function<void(float)> m_TickFunc;
 		float m_TimeVar;
 		float m_CheckTime;
@@ -232,7 +198,6 @@ public:
 		newAction->SetTreeName(m_TagName);
 		newAction->SetKeepAction(m_RootSequence);
 		newAction->SetActionType(BT_ACTION);
-		newAction->SetKeepActionType(BT_NONE);
 
 		m_RootSequence->AddChildAction(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
@@ -261,7 +226,6 @@ public:
 		newAction->SetTreeName(m_TagName);
 		newAction->SetKeepAction(m_RootSelector);
 		newAction->SetActionType(BT_ACTION);
-		newAction->SetKeepActionType(BT_NONE);
 		
 		m_RootSelector->AddChildAction(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
@@ -286,7 +250,6 @@ public:
 		newAction->SetTreeName(m_TagName);
 		newAction->SetKeepAction(getSequence);
 		newAction->SetActionType(BT_ACTION);
-		newAction->SetKeepActionType(BT_SEQUENCE);
 
 		getSequence->AddChildAction(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
@@ -311,7 +274,6 @@ public:
 		newAction->SetTreeName(m_TagName);
 		newAction->SetKeepAction(getSelector);
 		newAction->SetActionType(BT_ACTION);
-		newAction->SetKeepActionType(BT_SELECTOR);
 
 		getSelector->AddChildAction(newAction);
 		m_ActionMap.insert(make_pair(ActionName, newAction));
